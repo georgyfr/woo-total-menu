@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,19 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.0.4 =
+* New: Validation stricte par type d'item dans Schema_Validator (6 types : link, mega_container, column, widget, title, separator)
+* New: Validation par type de widget (8 types : category_grid, product_grid, mini_cart, search, banner, html, custom_link, title) avec règles spécifiques par type
+* New: Validation des modules header/footer (9 types : logo, menu, search, cart, button, html, social, newsletter, text)
+* New: Validation des badges (text requis, color et background en hex)
+* New: Validation de l'arborescence des layouts (rows → columns → modules)
+* New: 30+ codes d'erreur explicites (wtm_link_missing_label, wtm_mega_invalid_trigger, wtm_widget_invalid_source, etc.)
+* New: Méthode Schema_Validator::get_full_schema() retournant le schéma JSON Schema draft-04 complet avec definitions
+* New: Endpoint GET /wtm/v1/menus/schema enrichi avec definitions (item, badge, layout, row, column, module) et listes de valeurs autorisées
+* New: Documentation complète du schéma dans docs/schema.md (8 sections, 4 exemples complets)
+* New: 57 tests unitaires PHP couvrant tous les cas valides et invalides (100% de réussite)
+* Update: Rétro-compatibilité conservée — les configs v1.0.3 restent valides en v1.0.4
 
 = 1.0.3 =
 * New: API REST CRUD complète sous `/wp-json/wtm/v1/menus`

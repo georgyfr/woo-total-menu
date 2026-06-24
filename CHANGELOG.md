@@ -5,6 +5,53 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-06-24
+
+### Added
+- **Validation stricte par type d'item** dans `Schema_Validator` :
+  - `link` : requires `label` + `url` ; optional `target` (_self/_blank), `icon`, `badge`, `children`
+  - `mega_container` : requires `label` + `children` (au moins 1, tous de type `column`) ; optional `trigger` (hover/click), `width` (200-2000 ou "full")
+  - `column` : optional `width` (1-12), `children` (parmi widget/link/title/separator)
+  - `widget` : requires `widget_type` + `widget_settings` ; optional `label`, `children`
+  - `title` : requires `label`
+  - `separator` : no additional requirement
+- **Validation par type de widget** (8 types) avec règles spécifiques :
+  - `category_grid` : `columns` (1-6), `categories` (array of IDs), `show_images`, `show_counts`
+  - `product_grid` : `columns` (1-6), `product_source` (featured/best_selling/recent/on_sale/custom), `limit` (1-12)
+  - `mini_cart` : `show_subtotal`, `show_checkout_button`, `show_thumbnail` (booléens)
+  - `search` : `placeholder` (string), `show_category_filter` (bool)
+  - `banner` : `image_url` requis, `link_url`, `alt`, `target`
+  - `html` : `content` requis
+  - `custom_link` : `label` + `url` requis
+  - `title` : `text` requis, `level` (1-6)
+- **Validation des modules header/footer** (9 types) : `logo`, `menu`, `search`, `cart`, `button`, `html`, `social`, `newsletter`, `text`
+- **Validation des badges** : `text` requis, `color` et `background` en hex (#RGB ou #RRGGBB)
+- **Validation de l'arborescence des layouts** (rows → columns → modules) avec règles spécifiques à chaque niveau
+- **30+ codes d'erreur explicites** : `wtm_link_missing_label`, `wtm_mega_invalid_trigger`, `wtm_widget_invalid_source`, `wtm_badge_invalid_color`, `wtm_row_missing_columns`, etc.
+- **Méthode `Schema_Validator::get_full_schema()`** retournant le schéma JSON Schema draft-04 complet avec `definitions` (item, badge, layout, row, column, module)
+- **Endpoint `GET /wtm/v1/menus/schema` enrichi** avec :
+  - `definitions` (item, badge, layout, row, column, module)
+  - Listes de valeurs autorisées : `item_types`, `widget_types`, `module_types`, `link_targets`, `mega_triggers`, `mobile_behaviors`, `visibility_values`
+- **Documentation complète du schéma** dans `docs/schema.md` (8 sections, 4 exemples complets)
+- **57 tests unitaires PHP** dans `/home/z/my-project/server/scripts/test-schema-validator.php` couvrant tous les cas valides et invalides (100% de réussite)
+
+### Changed
+- `Schema_Validator::validate_item()` dispatche maintenant vers des validators spécifiques par type (`validate_item_link`, `validate_item_mega_container`, `validate_item_column`, `validate_item_widget`, `validate_item_title`, `validate_item_separator`)
+- `Menu_Controller::get_schema()` enrichi avec `definitions` et listes de valeurs autorisées
+- `WTM_VERSION` bumped to `1.0.4`
+
+### Backward Compatibility
+- Les configs valides en v1.0.3 restent valides en v1.0.4 (vérifié par test unitaire de rétro-compatibilité)
+
+### Directory Structure (delta)
+```
+woo-total-menu/
+├── docs/                        ← NEW directory
+│   └── schema.md                ← NEW (8 sections, 4 examples)
+└── src/Core/
+    └── Schema_Validator.php     (MODIFIED — extended with strict per-type validation)
+```
+
 ## [1.0.3] - 2026-06-24
 
 ### Added
