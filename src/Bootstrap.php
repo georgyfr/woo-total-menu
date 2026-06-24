@@ -103,6 +103,9 @@ class Bootstrap {
                 $this->services['permissions'] = new \WooTotalMenu\Core\Permissions();
                 $this->services['cpt']         = new \WooTotalMenu\Core\CPT_Manager();
 
+                // API REST (loaded on every request including AJAX).
+                $this->services['rest_menus']  = new \WooTotalMenu\Api\Menu_Controller();
+
                 // Admin (only in wp-admin context).
                 if ( is_admin() ) {
                         $this->services['admin_menu']  = new \WooTotalMenu\Admin\Admin_Menu();

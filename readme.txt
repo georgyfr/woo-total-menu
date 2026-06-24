@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,22 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.0.3 =
+* New: API REST CRUD complète sous `/wp-json/wtm/v1/menus`
+* New: Endpoint GET /wtm/v1/menus (liste avec filtres : search, menu_type, location, status, orderby, order, page, per_page)
+* New: Endpoint GET /wtm/v1/menus/{id} (détail d'un menu)
+* New: Endpoint POST /wtm/v1/menus (création avec validation JSON)
+* New: Endpoint PUT/PATCH /wtm/v1/menus/{id} (mise à jour partielle)
+* New: Endpoint DELETE /wtm/v1/menus/{id} (suppression avec retour de l'objet précédent)
+* New: Endpoint POST /wtm/v1/menus/{id}/duplicate (duplication avec copie des méta)
+* New: Endpoint GET /wtm/v1/menus/schema (schéma JSON complet)
+* New: Classe Schema_Validator (validation _wtm_config, _wtm_header_config, _wtm_footer_config)
+* New: Format de réponse propre (id, title, slug, status, menu_type, location, config, header_config, footer_config, version, dates, author, edit_url)
+* New: En-têtes de pagination X-WP-Total et X-WP-TotalPages sur la liste
+* New: En-tête Location sur les réponses 201 (create, duplicate)
+* Update: Bootstrap instancie désormais Menu_Controller
+* Security: Toutes les routes vérifient la capacité wtm_manage_menus
 
 = 1.0.2 =
 * New: Page "Tableau de bord" avec statistiques (menus totaux, actifs, brouillons, par type, par emplacement) et menus récents

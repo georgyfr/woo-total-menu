@@ -5,6 +5,43 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-06-24
+
+### Added
+- **REST API CRUD complète** sous `/wp-json/wtm/v1/menus` (class `WooTotalMenu\Api\Menu_Controller`):
+  - `GET /wtm/v1/menus` — Liste avec filtres (search, menu_type, location, status, orderby, order, page, per_page) et pagination (X-WP-Total, X-WP-TotalPages)
+  - `GET /wtm/v1/menus/{id}` — Détail d'un menu
+  - `POST /wtm/v1/menus` — Création avec validation JSON du config (201 + Location header)
+  - `PUT/PATCH /wtm/v1/menus/{id}` — Mise à jour partielle (uniquement les champs fournis)
+  - `DELETE /wtm/v1/menus/{id}` — Suppression avec retour de l'objet précédent
+  - `POST /wtm/v1/menus/{id}/duplicate` — Duplication avec copie de toutes les méta (201 + Location header)
+  - `GET /wtm/v1/menus/schema` — Schéma JSON Schema draft-04 complet
+- **Schema_Validator** class (`src/Core/Schema_Validator.php`) :
+  - `validate_config($value)` — Valide la structure de `_wtm_config` (version, items, settings)
+  - `validate_item($item, $path)` — Valide un élément de menu (id, type parmi 6 valeurs, children)
+  - `validate_layout($value)` — Valide `_wtm_header_config` / `_wtm_footer_config` (version, rows, settings)
+  - `decode_and_validate_config($raw)` — Décode + valide une string JSON
+  - `decode_and_validate_layout($raw)` — Idem pour les layouts
+  - `normalize_config($value)` / `normalize_layout($value)` — Complète les champs manquants
+- **Format de réponse propre** : id, title, slug, status, menu_type, location, config (décodé), header_config (décodé), footer_config (décodé), version, date_created, date_modified, author, edit_url
+- Tous les endpoints vérifient la capacité `wtm_manage_menus` (read + write)
+- Invalidation du cache du menu après chaque opération d'écriture
+- Pagination headers `X-WP-Total` et `X-WP-TotalPages` sur la liste
+- En-tête `Location` sur les réponses 201 (create + duplicate) pointant vers l'URL REST du menu créé
+
+### Changed
+- `Bootstrap::init_services()` : ajout de `rest_menus` (Menu_Controller) instancié sur tous les contextes (admin + frontend + AJAX)
+- `WTM_VERSION` bumped to `1.0.3`
+
+### Directory Structure (delta)
+```
+woo-total-menu/src/
+├── Api/                        ← NEW directory
+│   └── Menu_Controller.php     ← NEW
+└── Core/
+    └── Schema_Validator.php    ← NEW
+```
+
 ## [1.0.2] - 2026-06-24
 
 ### Added

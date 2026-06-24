@@ -20,8 +20,8 @@ Chaque fichier `vX.Y.Z.md` décrit :
 | [v1.0.0](./v1.0.0.md) | 2026-06-24 | ✅ Livrée | Squelette du plugin — Bootstrap, Cache, Permissions, page About |
 | [v1.0.1](./v1.0.1.md) | 2026-06-24 | ✅ Livrée | CPT `wtm_menu` + méta-boxes + 4 locations |
 | [v1.0.2](./v1.0.2.md) | 2026-06-24 | ✅ Livrée | Pages admin : Dashboard + Liste des menus + Réglages globaux |
-| v1.0.3 | à venir | 📋 Planifiée | API REST CRUD `/wtm/v1/menus` |
-| v1.0.4 | à venir | 📋 Planifiée | Schéma JSON de configuration + validateur |
+| [v1.0.3](./v1.0.3.md) | 2026-06-24 | ✅ Livrée | API REST CRUD `/wtm/v1/menus` (8 endpoints) + Schema_Validator |
+| v1.0.4 | à venir | 📋 Planifiée | Schéma JSON de configuration + validateur complet |
 | v1.1.x | à venir | 📋 Planifiée | Builder visuel React (SPA `@wordpress/scripts`) |
 | v1.2.x | à venir | 📋 Planifiée | Rendu frontend (Menu_Walker, méga menu, off-canvas mobile) |
 | v1.3.x | à venir | 📋 Planifiée | Widgets WooCommerce (catégories, produits, mini-panier) |
