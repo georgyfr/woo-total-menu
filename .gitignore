@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts (regenerated from src/)
+build/
+*.map
+
+# Logs & debug
+*.log
+debug.log
+wp-content/debug.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Test coverage
+coverage/
+.phpunit.result.cache
+
+# Local config (never commit secrets)
+local-config.php
+.env
+.env.local
+
+# ZIPs and downloads (kept in /home/z/my-project/download/, not in repo)
+*.zip
+download/
+
+# Compressed archives
+*.tar.gz
+*.tgz
+*.tar.bz2
+
+# Backup files
+*.bak
+*.orig
