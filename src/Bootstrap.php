@@ -105,7 +105,7 @@ class Bootstrap {
 
                 // Admin (only in wp-admin context).
                 if ( is_admin() ) {
-                        $this->services['admin_pages'] = new \WooTotalMenu\Admin\Pages\About();
+                        $this->services['admin_menu']  = new \WooTotalMenu\Admin\Admin_Menu();
                         $this->services['meta_boxes']  = new \WooTotalMenu\Admin\Meta_Boxes();
                 }
 

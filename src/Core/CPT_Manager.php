@@ -109,17 +109,7 @@ class CPT_Manager {
                         'has_archive'         => false,
                         'rewrite'             => false,
                         'exclude_from_search' => true,
-                        'capability_type'     => 'post',
-                        'capabilities'        => array(
-                                'edit_post'          => 'wtm_manage_menus',
-                                'read_post'          => 'read',
-                                'delete_post'        => 'wtm_manage_menus',
-                                'edit_posts'         => 'wtm_manage_menus',
-                                'edit_others_posts'  => 'wtm_manage_menus',
-                                'delete_posts'       => 'wtm_manage_menus',
-                                'publish_posts'      => 'wtm_manage_menus',
-                                'read_private_posts' => 'read',
-                        ),
+                        'capability_type'     => array( 'wtm_menu', 'wtm_menus' ), // Pluralized primitives.
                         'map_meta_cap'        => true,
                         'hierarchical'        => false,
                         'supports'            => array(

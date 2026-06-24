@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,18 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.0.2 =
+* New: Page "Tableau de bord" avec statistiques (menus totaux, actifs, brouillons, par type, par emplacement) et menus récents
+* New: Page "Menus" avec table filtrable (type, statut, recherche) et 4 actions par ligne (modifier, dupliquer, activer/désactiver, supprimer)
+* New: Page "Réglages" avec 7 onglets (général, styles, typographie, responsive, performance, analytics, permissions)
+* New: Menu admin structuré avec 4 sous-menus (Dashboard, Menus, Réglages, À propos)
+* New: Actions routées via admin_init (create_menu, delete_menu, duplicate_menu, toggle_status) avec nonces et vérifications de capacité
+* New: Matrice de permissions rôles × capacités dans l'onglet Permissions
+* New: ~120 lignes de CSS admin mutualisées (cards, badges, tables, tabs, boutons, formulaires)
+* New: Dossier `versions/` avec documentation détaillée de chaque version (v1.0.0, v1.0.1, v1.0.2)
+* Update: Page "À propos" refondue (classe statique, roadmap enrichie avec icônes, carte "Liens utiles" avec liens GitHub)
+* Update: Bootstrap instancie désormais Admin_Menu (au lieu de Pages\About)
 
 = 1.0.1 =
 * New: Custom Post Type `wtm_menu` (REST-enabled, revision-enabled)

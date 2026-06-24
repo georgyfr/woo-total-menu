@@ -5,6 +5,67 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-06-24
+
+### Added
+- **Page "Tableau de bord"** (`src/Admin/Pages/Dashboard.php`) with:
+  - 6 stat cards (total menus, published, drafts, by location, by type, environment info)
+  - Quick action buttons ("Créer un nouveau menu", "Voir tous les menus")
+  - Recent menus table (last 5)
+  - Admin notices based on query params
+- **Page "Menus"** (`src/Admin/Pages/Menus_List.php`) with:
+  - Filter bar (by type, by status, full-text search)
+  - WP-style table with 7 columns (title, type, location, status, created, modified, actions)
+  - 4 row actions: edit, toggle status, duplicate, delete (with JS confirm)
+  - Empty state CTA
+- **Page "Réglages"** (`src/Admin/Pages/Settings.php`) with 7 tabs:
+  - Général (enable plugin, default location)
+  - Styles (5 color pickers, border radius)
+  - Typographie (10 Google Fonts, base size, heading size)
+  - Responsive (mobile/tablet breakpoints, mobile behavior, hamburger position)
+  - Performance (cache, lazy load, minify CSS)
+  - Analytics (disabled — preview for v1.7.1)
+  - Permissions (role × capability matrix, with admin locked)
+- **Admin_Menu orchestrator** (`src/Admin/Admin_Menu.php`):
+  - Top-level menu + 4 submenus (Dashboard, Menus, Settings, About)
+  - Capability checks per submenu
+  - Action router via `admin_init` (create_menu, delete_menu, duplicate_menu, toggle_status)
+  - Nonce verification + capability check for each action
+  - Cache invalidation on every action
+  - ~120 lines of shared admin CSS (cards, badges, tables, tabs, buttons, forms, empty state)
+- **Dossier `versions/`** with detailed per-version documentation:
+  - `README.md` — table of contents with all versions and statuses
+  - `v1.0.0.md`, `v1.0.1.md`, `v1.0.2.md` — full release notes (objective, features, changes, files, tests, update instructions, GitHub links)
+
+### Changed
+- `About.php` refactored:
+  - Converted from instance class to static class (`About::render()`)
+  - Removed redundant `admin_menu` hook (now handled by `Admin_Menu`)
+  - Removed inline CSS (now shared via `Admin_Menu::get_admin_css()`)
+  - Added "Liens utiles" card with GitHub links
+  - Roadmap with status icons (done/current/todo)
+- `Bootstrap::init_services()`:
+  - Replaced `admin_pages` (was `Pages\About`) with `admin_menu` (`Admin_Menu`)
+- `WTM_VERSION` bumped to `1.0.2`.
+
+### Directory Structure (delta)
+```
+woo-total-menu/
+├── versions/                    ← NEW (entire folder)
+│   ├── README.md
+│   ├── v1.0.0.md
+│   ├── v1.0.1.md
+│   └── v1.0.2.md
+└── src/
+    └── Admin/
+        ├── Admin_Menu.php       ← NEW
+        └── Pages/
+            ├── About.php        (MODIFIED)
+            ├── Dashboard.php    ← NEW
+            ├── Menus_List.php   ← NEW
+            └── Settings.php     ← NEW
+```
+
 ## [1.0.1] - 2026-06-24
 
 ### Added

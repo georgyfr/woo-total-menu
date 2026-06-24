@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin "About" page — entry point of the plugin in WP admin.
+ * About page.
  *
  * @package WooTotalMenu
  */
@@ -14,139 +14,130 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class About
  *
- * Adds the main "Woo Total Menu" menu in the WP admin sidebar
- * and renders the "About / Getting Started" page.
+ * Renders the "About / Getting Started" page as a submenu of
+ * Woo Total Menu. Uses the shared admin styles provided by Admin_Menu.
  */
 class About {
 
-	const PAGE_SLUG = 'wtm-about';
-	const CAPABILITY = 'wtm_manage_menus';
-
 	/**
-	 * Constructor — registers hooks.
-	 */
-	public function __construct() {
-		add_action( 'admin_menu', array( $this, 'register_menu' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ) );
-	}
-
-	/**
-	 * Register the top-level admin menu.
+	 * Render the page (called by Admin_Menu).
 	 *
 	 * @return void
 	 */
-	public function register_menu() {
-		add_menu_page(
-			__( 'Woo Total Menu', 'woo-total-menu' ),
-			__( 'Woo Total Menu', 'woo-total-menu' ),
-			self::CAPABILITY,
-			self::PAGE_SLUG,
-			array( $this, 'render_page' ),
-			'dashicons-menu', // icon
-			58 // position after WooCommerce
+	public static function render() {
+		$roadmap = array(
+			array( 'v1.0.0', 'Squelette du plugin (Bootstrap, Cache, Permissions, page About)', 'done' ),
+			array( 'v1.0.1', 'Custom Post Type wtm_menu + méta-boxes + 4 locations', 'done' ),
+			array( 'v1.0.2', 'Pages admin (Dashboard, Liste des menus, Réglages globaux)', 'current' ),
+			array( 'v1.0.3', 'API REST CRUD /wtm/v1/menus', 'todo' ),
+			array( 'v1.0.4', 'Schéma JSON de configuration + validateur', 'todo' ),
+			array( 'v1.1.x', 'Builder visuel React (SPA @wordpress/scripts)', 'todo' ),
+			array( 'v1.2.x', 'Rendu frontend (Menu_Walker, méga menu, off-canvas mobile)', 'todo' ),
+			array( 'v1.3.x', 'Widgets WooCommerce (catégories, produits, mini-panier)', 'todo' ),
+			array( 'v1.4.x', 'Header & Footer Builder', 'todo' ),
+			array( 'v1.5.x', 'Système de templates (12+ templates intégrés)', 'todo' ),
+			array( 'v1.6.x', 'Rôles, blocs Gutenberg, compatibilité Elementor/Bricks/Oxygen, multisite', 'todo' ),
+			array( 'v1.7.x', 'Menus conditionnels, analytics simple', 'todo' ),
 		);
-	}
-
-	/**
-	 * Render the About page.
-	 *
-	 * @return void
-	 */
-	public function render_page() {
 		?>
-		<div class="wrap wtm-about">
-			<div class="wtm-about__header">
-				<h1>
-					<span class="dashicons dashicons-menu"></span>
+		<div class="wrap wtm-page">
+			<div style="background: linear-gradient(135deg, #6C5CE7, #8E7CF5); color:#fff; padding:32px; border-radius:8px; margin:16px 0;">
+				<h1 style="color:#fff; margin:0 0 8px; display:flex; align-items:center; gap:10px;">
+					<span class="dashicons dashicons-menu" style="font-size:32px; width:32px; height:32px;"></span>
 					<?php esc_html_e( 'Woo Total Menu', 'woo-total-menu' ); ?>
-					<span class="wtm-version">v<?php echo esc_html( WTM_VERSION ); ?></span>
+					<span style="font-size:12px; background:rgba(255,255,255,0.25); padding:2px 10px; border-radius:12px; margin-left:8px;">
+						v<?php echo esc_html( WTM_VERSION ); ?>
+					</span>
 				</h1>
-				<p class="wtm-tagline">
+				<p style="margin:0; opacity:0.95; font-size:14px;">
 					<?php esc_html_e( 'Créez des méga menus, headers et footers WooCommerce avancés via un builder visuel glisser-déposer.', 'woo-total-menu' ); ?>
 				</p>
 			</div>
 
-			<div class="wtm-about__grid">
+			<div class="wtm-grid">
 				<div class="wtm-card">
-					<h2><span class="dashicons dashicons-info"></span> <?php esc_html_e( 'À propos de cette version', 'woo-total-menu' ); ?></h2>
+					<h3><span class="dashicons dashicons-info"></span> <?php esc_html_e( 'À propos de cette version', 'woo-total-menu' ); ?></h3>
 					<p>
 						<?php
 						printf(
 							/* translators: %s version number */
-							esc_html__( 'Vous utilisez la version %s. Cette version initiale pose les fondations du plugin :', 'woo-total-menu' ),
+							esc_html__( 'Vous utilisez la version %s. Voici ce qui est disponible actuellement :', 'woo-total-menu' ),
 							'<strong>v' . esc_html( WTM_VERSION ) . '</strong>'
 						);
 						?>
 					</p>
-					<ul class="wtm-list">
+					<ul style="margin-left:18px; padding-left:0;">
 						<li><?php esc_html_e( 'Squelette PHP du plugin et autoloader PSR-4', 'woo-total-menu' ); ?></li>
-						<li><?php esc_html_e( 'Système de permissions et capacités personnalisées', 'woo-total-menu' ); ?></li>
+						<li><?php esc_html_e( 'Système de permissions (4 capacités personnalisées)', 'woo-total-menu' ); ?></li>
 						<li><?php esc_html_e( 'Gestionnaire de cache (objet + transients)', 'woo-total-menu' ); ?></li>
-						<li><?php esc_html_e( 'Réglages globaux par défaut', 'woo-total-menu' ); ?></li>
-						<li><?php esc_html_e( 'Page d\'accueil de l\'administration', 'woo-total-menu' ); ?></li>
+						<li><?php esc_html_e( 'Custom Post Type wtm_menu + 6 méta-keys + méta-boxes', 'woo-total-menu' ); ?></li>
+						<li><?php esc_html_e( '4 types de menus et 4 emplacements enregistrés', 'woo-total-menu' ); ?></li>
+						<li><?php esc_html_e( 'Tableau de bord avec statistiques', 'woo-total-menu' ); ?></li>
+						<li><?php esc_html_e( 'Liste des menus avec filtres et actions', 'woo-total-menu' ); ?></li>
+						<li><?php esc_html_e( 'Réglages globaux (7 onglets : général, styles, typo, responsive, performance, analytics, permissions)', 'woo-total-menu' ); ?></li>
+						<li><?php esc_html_e( 'Actions : créer / modifier / dupliquer / activer / supprimer un menu', 'woo-total-menu' ); ?></li>
 					</ul>
 				</div>
 
 				<div class="wtm-card">
-					<h2><span class="dashicons dashicons-clock"></span> <?php esc_html_e( 'Prochaines étapes', 'woo-total-menu' ); ?></h2>
-					<ol class="wtm-roadmap">
-						<li><strong>v1.0.1</strong> — Custom Post Type <code>wtm_menu</code></li>
-						<li><strong>v1.0.2</strong> — Pages admin (Dashboard, Menus, Réglages)</li>
-						<li><strong>v1.0.3</strong> — API REST CRUD menus</li>
-						<li><strong>v1.0.4</strong> — Schéma JSON de configuration</li>
-						<li><strong>v1.1.x</strong> — Builder visuel React</li>
-						<li><strong>v1.2.x</strong> — Rendu frontend</li>
-						<li><strong>v1.3.x</strong> — Widgets WooCommerce</li>
+					<h3><span class="dashicons dashicons-clock"></span> <?php esc_html_e( 'Roadmap', 'woo-total-menu' ); ?></h3>
+					<ol style="margin-left:18px; padding-left:0;">
+						<?php foreach ( $roadmap as $item ) : ?>
+							<?php
+							list( $version, $desc, $state ) = $item;
+							$icon_class = 'dashicons-minus';
+							$color      = '#9ca3af';
+							if ( 'done' === $state ) {
+								$icon_class = 'dashicons-yes-alt';
+								$color      = '#00B894';
+							} elseif ( 'current' === $state ) {
+								$icon_class = 'dashicons-arrow-right-alt2';
+								$color      = '#6C5CE7';
+							}
+							?>
+							<li style="margin:6px 0; display:flex; align-items:flex-start; gap:8px;">
+								<span class="dashicons <?php echo esc_attr( $icon_class ); ?>" style="color:<?php echo esc_attr( $color ); ?>; font-size:16px; width:16px; height:16px; margin-top:2px;"></span>
+								<span>
+									<strong><?php echo esc_html( $version ); ?></strong> —
+									<?php echo esc_html( $desc ); ?>
+								</span>
+							</li>
+						<?php endforeach; ?>
 					</ol>
 				</div>
 
 				<div class="wtm-card">
-					<h2><span class="dashicons dashicons-admin-tools"></span> <?php esc_html_e( 'Environnement', 'woo-total-menu' ); ?></h2>
+					<h3><span class="dashicons dashicons-admin-tools"></span> <?php esc_html_e( 'Environnement', 'woo-total-menu' ); ?></h3>
 					<table class="wtm-table">
 						<tbody>
-							<tr><th>PHP</th><td><?php echo esc_html( PHP_VERSION ); ?></td></tr>
-							<tr><th>WordPress</th><td><?php echo esc_html( get_bloginfo( 'version' ) ); ?></td></tr>
-							<tr><th>WooCommerce</th><td><?php echo class_exists( 'WooCommerce' ) ? esc_html( WC()->version ) : '—'; ?></td></tr>
-							<tr><th>Thème actif</th><td><?php echo esc_html( wp_get_theme()->get( 'Name' ) ); ?></td></tr>
-							<tr><th>DB Version</th><td><?php echo esc_html( (string) get_option( WTM_OPTION_DB_VERSION ) ); ?></td></tr>
+							<tr><th style="text-align:left; padding:6px 0; color:#6b7280; width:35%;">PHP</th><td style="padding:6px 0; font-family:monospace;"><?php echo esc_html( PHP_VERSION ); ?></td></tr>
+							<tr><th style="text-align:left; padding:6px 0; color:#6b7280;">WordPress</th><td style="padding:6px 0; font-family:monospace;"><?php echo esc_html( get_bloginfo( 'version' ) ); ?></td></tr>
+							<tr><th style="text-align:left; padding:6px 0; color:#6b7280;">WooCommerce</th><td style="padding:6px 0; font-family:monospace;"><?php echo class_exists( 'WooCommerce' ) ? esc_html( WC()->version ) : '—'; ?></td></tr>
+							<tr><th style="text-align:left; padding:6px 0; color:#6b7280;">Thème actif</th><td style="padding:6px 0; font-family:monospace;"><?php echo esc_html( wp_get_theme()->get( 'Name' ) ); ?></td></tr>
+							<tr><th style="text-align:left; padding:6px 0; color:#6b7280;">DB Version</th><td style="padding:6px 0; font-family:monospace;"><?php echo esc_html( (string) get_option( WTM_OPTION_DB_VERSION ) ); ?></td></tr>
 						</tbody>
 					</table>
 				</div>
 			</div>
+
+			<div class="wtm-card" style="margin-top:16px;">
+				<h3><span class="dashicons dashicons-book"></span> <?php esc_html_e( 'Liens utiles', 'woo-total-menu' ); ?></h3>
+				<p>
+					<a href="https://github.com/georgyfr/woo-total-menu" target="_blank" class="wtm-btn is-secondary">
+						<span class="dashicons dashicons-mark-github"></span>
+						<?php esc_html_e( 'Code source sur GitHub', 'woo-total-menu' ); ?>
+					</a>
+					<a href="https://github.com/georgyfr/woo-total-menu/releases" target="_blank" class="wtm-btn is-secondary">
+						<span class="dashicons dashicons-tag"></span>
+						<?php esc_html_e( 'Toutes les releases', 'woo-total-menu' ); ?>
+					</a>
+					<a href="https://github.com/georgyfr/woo-total-menu/blob/main/CHANGELOG.md" target="_blank" class="wtm-btn is-secondary">
+						<span class="dashicons dashicons-list-view"></span>
+						<?php esc_html_e( 'Changelog complet', 'woo-total-menu' ); ?>
+					</a>
+				</p>
+			</div>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Enqueue minimal admin styles for the About page.
-	 *
-	 * @param string $hook Current admin page hook.
-	 * @return void
-	 */
-	public function enqueue_styles( $hook ) {
-		if ( 'toplevel_page_' . self::PAGE_SLUG !== $hook ) {
-			return;
-		}
-		// Inline CSS — minimal, no external deps for v1.0.0.
-		$css = <<<'CSS'
-		.wtm-about__header { background: linear-gradient(135deg, #6C5CE7, #8E7CF5); color: #fff; padding: 24px 32px; border-radius: 8px; margin: 16px 0; }
-		.wtm-about__header h1 { color: #fff; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
-		.wtm-about__header h1 .dashicons { font-size: 32px; width: 32px; height: 32px; }
-		.wtm-version { font-size: 12px; background: rgba(255,255,255,0.25); padding: 2px 10px; border-radius: 12px; margin-left: 8px; }
-		.wtm-tagline { margin: 0; opacity: 0.95; }
-		.wtm-about__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
-		.wtm-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-		.wtm-card h2 { margin-top: 0; font-size: 16px; display: flex; align-items: center; gap: 6px; }
-		.wtm-card h2 .dashicons { color: #6C5CE7; }
-		.wtm-list, .wtm-roadmap { margin-left: 18px; padding-left: 0; }
-		.wtm-list li, .wtm-roadmap li { margin: 6px 0; }
-		.wtm-table { width: 100%; border-collapse: collapse; }
-		.wtm-table th { text-align: left; padding: 6px 0; color: #6b7280; font-weight: 500; width: 35%; }
-		.wtm-table td { padding: 6px 0; font-family: monospace; }
-		code { background: #f3f4f6; padding: 1px 6px; border-radius: 3px; font-size: 12px; }
-CSS;
-		wp_register_style( 'wtm-about', false, array(), WTM_VERSION );
-		wp_enqueue_style( 'wtm-about' );
-		wp_add_inline_style( 'wtm-about', $css );
 	}
 }
