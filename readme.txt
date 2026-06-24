@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,27 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.1.1 =
+* New: CRUD complet des items dans le builder React
+* New: Composant AddItemButton (dropdown avec 6 types : link, mega_container, column, widget, title, separator)
+* New: Bouton "Ajouter un élément" en racine et dans chaque mega_container/column
+* New: Suppression d'item (icône corbeille au survol + confirmation)
+* New: Renommage inline par double-clic sur le label (Enter pour valider, Escape pour annuler)
+* New: Panneau Propriétés entièrement éditable selon le type d'item :
+  * link : label, url, target, icon, badge, visibility
+  * mega_container : label, trigger, width
+  * column : width (1-12)
+  * widget : widget_type, label, et settings selon le type (html content, banner image, product_grid source/columns/limit, category_grid columns/images/counts)
+  * title : label, badge
+  * separator : (aucune propriété spécifique)
+* New: Éditeur de badge (texte + couleur texte + couleur fond + bouton retirer)
+* New: Édition du titre du menu (panneau propriétés quand aucun item sélectionné)
+* New: Actions Redux addItem, updateItem, removeItem, moveItem dans le store wtm/menu
+* New: Helpers generateId, findItem, mapItems, updateItemById, removeItemById, addChildToParent (immutables)
+* Update: TreePanel refondu avec actions au survol (ajouter enfant, supprimer) et mode édition
+* Update: PropertiesPanel refondu avec formulaires d'édition complets et panneau MenuProperties
+* Update: Build bundle 14 Ko → 28.6 Ko (nouvelles fonctionnalités)
 
 = 1.1.0 =
 * New: Builder visuel React — squelette de l'application

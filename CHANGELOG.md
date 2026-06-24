@@ -5,6 +5,70 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-06-24
+
+### Added
+- **CRUD complet des items dans le builder React** :
+  - Bouton "Ajouter un élément" avec dropdown des 6 types (link, mega_container, column, widget, title, separator)
+  - Suppression d'item (icône corbeille au survol + confirmation JavaScript)
+  - Renommage inline par double-clic sur le label (Enter pour valider, Escape pour annuler)
+  - Ajout d'enfants dans `mega_container` et `column` (icône "+" au survol)
+- **Composant `AddItemButton`** (`builder/components/AddItemButton.js`) :
+  - Dropdown avec 6 types d'items, chacun avec icône, libellé et description
+  - Valeurs par défaut intelligentes (link → label/url, widget html → content, etc.)
+  - Variantes compact (icône seule) et full (icône + texte)
+  - Fermeture automatique au clic en dehors
+- **Panneau Propriétés entièrement éditable** selon le type d'item :
+  - **link** : label, url, target (_self/_blank), icon, badge, visibility
+  - **mega_container** : label, trigger (hover/click), width (200-2000 ou "full")
+  - **column** : width (1-12)
+  - **widget** : widget_type (read-only), label, et settings selon le type :
+    - `html` : content (textarea)
+    - `banner` : image_url, link_url, alt
+    - `product_grid` : product_source (5 options), columns (1-6), limit (1-12)
+    - `category_grid` : columns (1-6), show_images, show_counts
+  - **title** : label, badge
+  - **separator** : aucune propriété spécifique (juste visibility)
+- **Éditeur de badge** : texte + couleur texte + couleur fond (color pickers) + bouton "Retirer le badge"
+- **Édition du titre du menu** dans le panneau Propriétés quand aucun item n'est sélectionné
+- **Actions Redux dans le store `wtm/menu`** :
+  - `addItem(item, parentId)` — Ajoute un item (génère un ID unique si manquant)
+  - `updateItem(id, patch)` — Met à jour un item par ID avec un patch
+  - `removeItem(id)` — Supprime un item (et tous ses enfants récursivement)
+  - `moveItem(id, parentId, index)` — Déplace un item vers un nouveau parent à un index donné (préparé pour v1.1.2 drag & drop)
+- **Helpers immutables** exportés pour la manipulation de l'arbre :
+  - `generateId(prefix)` — Génère un ID unique (prefix-timestamp-counter)
+  - `findItem(items, id)` — Recherche récursive d'un item par ID
+  - `mapItems(items, fn)` — Map récursif (retourne `false` pour supprimer)
+  - `updateItemById(items, id, patch)` — Met à jour un item par ID
+  - `removeItemById(items, id)` — Supprime un item par ID
+  - `addChildToParent(items, parentId, newItem)` — Ajoute un enfant à un parent
+
+### Changed
+- `TreePanel.js` refondu :
+  - Actions au survol de chaque ligne : ajouter enfant (+), supprimer (corbeille)
+  - Mode édition inline (input remplaçant le label)
+  - Bouton "Ajouter" en en-tête + en pied de panneau + dans l'état vide
+  - Indicateur visuel pour les items avec badge
+- `PropertiesPanel.js` refondu :
+  - Composant `ItemProperties` avec formulaires d'édition par type
+  - Composant `MenuProperties` avec édition du titre
+  - Composant `BadgeEditor` (ajout/édition/suppression de badge)
+  - Composant `EmptyState` quand aucun menu chargé
+- Build bundle : 14 Ko → 28.6 Ko JS (nouvelles fonctionnalités)
+- `WTM_VERSION` bumped to `1.1.1`
+
+### Directory Structure (delta)
+```
+woo-total-menu/builder/
+├── components/
+│   ├── AddItemButton.js       ← NEW (dropdown 6 types)
+│   ├── TreePanel.js           (MODIFIED — suppression + rename inline + add child)
+│   └── PropertiesPanel.js     (MODIFIED — édition complète par type)
+└── stores/
+    └── menu.js                (MODIFIED — actions CRUD items + helpers)
+```
+
 ## [1.1.0] - 2026-06-24
 
 ### Added

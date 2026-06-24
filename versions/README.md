@@ -23,7 +23,7 @@ Chaque fichier `vX.Y.Z.md` décrit :
 | [v1.0.3](./v1.0.3.md) | 2026-06-24 | ✅ Livrée | API REST CRUD `/wtm/v1/menus` (8 endpoints) + Schema_Validator |
 | [v1.0.4](./v1.0.4.md) | 2026-06-24 | ✅ Livrée | Schéma JSON strict + validateur par type d'item/widget + 57 tests unitaires |
 | [v1.1.0](./v1.1.0.md) | 2026-06-24 | ✅ Livrée | Builder visuel React — squelette (3 colonnes, stores @wordpress/data, build pipeline) |
-| v1.1.1 | à venir | 📋 Planifiée | CRUD items dans l'UI (ajout/suppression/renommage) |
+| [v1.1.1](./v1.1.1.md) | 2026-06-24 | ✅ Livrée | CRUD items dans l'UI (6 types, suppression, renommage inline, édition propriétés) |
 | v1.1.2 | à venir | 📋 Planifiée | Drag & drop arborescent |
 | v1.1.3 | à venir | 📋 Planifiée | Live preview via iframe + postMessage |
 | v1.1.4 | à venir | 📋 Planifiée | Undo/Redo et historique |

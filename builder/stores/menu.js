@@ -7,7 +7,6 @@
 
 import { createReduxStore, register } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
-import { addQueryArgs } from '@wordpress/url';
 
 const DEFAULT_STATE = {
 	menu: null,
@@ -16,6 +15,116 @@ const DEFAULT_STATE = {
 	error: null,
 	isDirty: false,
 };
+
+// Counter used to generate unique IDs for new items.
+let itemCounter = 0;
+
+/**
+ * Generate a unique ID for a new item.
+ *
+ * @param {string} prefix Prefix.
+ * @return {string} Unique ID.
+ */
+function generateId(prefix = 'item') {
+	itemCounter++;
+	return `${prefix}-${Date.now()}-${itemCounter}`;
+}
+
+/**
+ * Recursively find an item by ID in the items tree.
+ *
+ * @param {Array}  items Items array.
+ * @param {string} id    Item ID.
+ * @return {Object|null} The item or null.
+ */
+function findItem(items, id) {
+	for (const item of items) {
+		if (item.id === id) return item;
+		if (item.children) {
+			const found = findItem(item.children, id);
+			if (found) return found;
+		}
+	}
+	return null;
+}
+
+/**
+ * Recursively map over the items tree (immutable).
+ *
+ * @param {Array}    items Items array.
+ * @param {Function} fn    Callback (item) => newItem (or null to keep as-is, false to remove).
+ * @return {Array} New items array.
+ */
+function mapItems(items, fn) {
+	const result = [];
+	for (const item of items) {
+		const mapped = fn(item);
+		if (mapped === false) continue;
+		const newItem = mapped || item;
+		if (newItem.children) {
+			newItem = { ...newItem, children: mapItems(newItem.children, fn) };
+		}
+		result.push(newItem);
+	}
+	return result;
+}
+
+/**
+ * Recursively update a single item by ID.
+ *
+ * @param {Array}  items    Items array.
+ * @param {string} id       Item ID.
+ * @param {Object} patch    Patch to apply.
+ * @return {Array} New items array.
+ */
+function updateItemById(items, id, patch) {
+	return mapItems(items, (item) => {
+		if (item.id === id) {
+			return { ...item, ...patch };
+		}
+		return null;
+	});
+}
+
+/**
+ * Recursively remove an item by ID.
+ *
+ * @param {Array}  items Items array.
+ * @param {string} id    Item ID.
+ * @return {Array} New items array.
+ */
+function removeItemById(items, id) {
+	return mapItems(items, (item) => {
+		if (item.id === id) {
+			return false; // remove
+		}
+		return null;
+	});
+}
+
+/**
+ * Add a child to an item (by parent ID).
+ * If parentId is null, add to root.
+ *
+ * @param {Array}  items    Items array.
+ * @param {string} parentId Parent ID (or null).
+ * @param {Object} newItem  New item to add.
+ * @return {Array} New items array.
+ */
+function addChildToParent(items, parentId, newItem) {
+	if (!parentId) {
+		return [...items, newItem];
+	}
+	return mapItems(items, (item) => {
+		if (item.id === parentId) {
+			return {
+				...item,
+				children: [...(item.children || []), newItem],
+			};
+		}
+		return null;
+	});
+}
 
 const actions = {
 	setMenu(menu) {
@@ -39,6 +148,53 @@ const actions = {
 	updateMenuConfig(config) {
 		return { type: 'UPDATE_MENU_CONFIG', config };
 	},
+
+	// === Item CRUD (added in v1.1.1) ===
+
+	/**
+	 * Add a new item to the menu (root or as child of a parent).
+	 *
+	 * @param {Object} item     Item to add (must have at least `type`).
+	 * @param {string} parentId Parent ID (null for root).
+	 * @return {Object} Action.
+	 */
+	addItem(item, parentId = null) {
+		return { type: 'ADD_ITEM', item, parentId };
+	},
+
+	/**
+	 * Update an item by ID with a patch.
+	 *
+	 * @param {string} id    Item ID.
+	 * @param {Object} patch Patch to apply.
+	 * @return {Object} Action.
+	 */
+	updateItem(id, patch) {
+		return { type: 'UPDATE_ITEM', id, patch };
+	},
+
+	/**
+	 * Remove an item by ID (and all its children).
+	 *
+	 * @param {string} id Item ID.
+	 * @return {Object} Action.
+	 */
+	removeItem(id) {
+		return { type: 'REMOVE_ITEM', id };
+	},
+
+	/**
+	 * Move an item to a new parent (null for root) at a specific index.
+	 *
+	 * @param {string} id        Item ID.
+	 * @param {string} parentId  New parent ID (null for root).
+	 * @param {number} index     Index in the new parent's children.
+	 * @return {Object} Action.
+	 */
+	moveItem(id, parentId, index) {
+		return { type: 'MOVE_ITEM', id, parentId, index };
+	},
+
 	loadMenu(menuId, defaultMenu = null) {
 		return async ({ dispatch, registry }) => {
 			dispatch.setIsLoading(true);
@@ -48,7 +204,6 @@ const actions = {
 					dispatch.setMenu(defaultMenu);
 					dispatch.setDirty(false);
 				} else {
-					const restUrl = registry.select('wtm/ui').getRestUrl();
 					const restNonce = registry.select('wtm/ui').getRestNonce();
 					apiFetch.use(apiFetch.createNonceMiddleware(restNonce));
 					const menu = await apiFetch({ path: `/wtm/v1/menus/${menuId}` });
@@ -62,6 +217,7 @@ const actions = {
 			}
 		};
 	},
+
 	saveMenu() {
 		return async ({ dispatch, select, registry }) => {
 			const menu = select.getMenu();
@@ -134,17 +290,6 @@ const selectors = {
 	},
 };
 
-function findItem(items, id) {
-	for (const item of items) {
-		if (item.id === id) return item;
-		if (item.children) {
-			const found = findItem(item.children, id);
-			if (found) return found;
-		}
-	}
-	return null;
-}
-
 const reducer = (state = DEFAULT_STATE, action) => {
 	switch (action.type) {
 		case 'SET_MENU':
@@ -169,10 +314,80 @@ const reducer = (state = DEFAULT_STATE, action) => {
 				menu: { ...state.menu, config: action.config },
 				isDirty: true,
 			};
+		case 'ADD_ITEM': {
+			const newItem = {
+				id: action.item.id || generateId(action.item.type),
+				...action.item,
+			};
+			const items = addChildToParent(state.menu.config.items, action.parentId, newItem);
+			return {
+				...state,
+				menu: {
+					...state.menu,
+					config: { ...state.menu.config, items },
+				},
+				isDirty: true,
+			};
+		}
+		case 'UPDATE_ITEM': {
+			const items = updateItemById(state.menu.config.items, action.id, action.patch);
+			return {
+				...state,
+				menu: {
+					...state.menu,
+					config: { ...state.menu.config, items },
+				},
+				isDirty: true,
+			};
+		}
+		case 'REMOVE_ITEM': {
+			const items = removeItemById(state.menu.config.items, action.id);
+			return {
+				...state,
+				menu: {
+					...state.menu,
+					config: { ...state.menu.config, items },
+				},
+				isDirty: true,
+			};
+		}
+		case 'MOVE_ITEM': {
+			// Find the item to move.
+			const itemToMove = findItem(state.menu.config.items, action.id);
+			if (!itemToMove) return state;
+			// Remove from current location.
+			let items = removeItemById(state.menu.config.items, action.id);
+			// Insert at new location.
+			if (!action.parentId) {
+				// Insert at root at given index.
+				items = [...items];
+				items.splice(action.index, 0, itemToMove);
+			} else {
+				items = mapItems(items, (item) => {
+					if (item.id === action.parentId) {
+						const children = [...(item.children || [])];
+						children.splice(action.index, 0, itemToMove);
+						return { ...item, children };
+					}
+					return null;
+				});
+			}
+			return {
+				...state,
+				menu: {
+					...state.menu,
+					config: { ...state.menu.config, items },
+				},
+				isDirty: true,
+			};
+		}
 		default:
 			return state;
 	}
 };
+
+// Export helpers for testing.
+export { generateId, findItem, mapItems, updateItemById, removeItemById, addChildToParent };
 
 export const WTM_STORE_NAME = 'wtm/menu';
 
