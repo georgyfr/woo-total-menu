@@ -5,6 +5,77 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-06-24
+
+### Added
+- **Builder visuel React — squelette de l'application** :
+  - Page admin `wtm-builder` (full-screen, masque le menu WP et l'admin bar)
+  - Layout 3 colonnes : arborescence (280px) / aperçu (flex 1) / propriétés (320px)
+  - En-tête avec titre du menu, indicateur "dirty" (●), badge de type, sélecteur de device (desktop/tablet/mobile), bouton "Enregistrer"
+- **Stores `@wordpress/data`** :
+  - `wtm/menu` : état du menu (menu, items, isLoading, isSaving, error, isDirty), actions `loadMenu`, `saveMenu`, `updateMenuTitle`, `updateMenuConfig`, sélecteurs `getMenu`, `getItems`, `getSelectedItem`, `isLoading`, `isSaving`, `getError`, `isDirty`
+  - `wtm/ui` : état UI (selectedItemId, device, restUrl, restNonce), actions `selectItem`, `setDevice`, `setRestConfig`
+- **Communication avec l'API REST `/wtm/v1/menus`** via `@wordpress/api-fetch` avec nonce middleware
+- **Pipeline de build `@wordpress/scripts`** :
+  - Webpack 5 + Babel + DependencyExtractionWebpackPlugin (externals WordPress)
+  - `webpack.config.js` custom pour pointer vers `builder/index.js` au lieu du `src/index.js` par défaut
+  - Sortie : `build/index.js` (~14 Ko) + `build/style-index.css` (~8 Ko) + `build/index.asset.php` (dépendances)
+- **Style CSS du builder** (~400 lignes) :
+  - Layout flex 3 colonnes avec redimensionnement responsive
+  - Composants stylés : header, tree panel, preview panel, properties panel
+  - Variables de couleur cohérentes avec l'admin WP (primary #6C5CE7)
+- **Bouton "Builder"** sur la liste des menus (ouvre le builder pour le menu sélectionné)
+- **`package.json`** avec :
+  - Dépendances : `@wordpress/api-fetch`, `@wordpress/data`, `@wordpress/element`, `@wordpress/i18n`, `@wordpress/url`
+  - devDependency : `@wordpress/scripts`
+  - Scripts : `npm run build`, `npm run start`, `npm run lint:js`
+
+### Components React créés
+- `builder/index.js` — Point d'entrée, rend `<App>` dans `#wtm-builder-root`
+- `builder/components/App.js` — Composant racine, orchestre les 3 colonnes
+- `builder/components/Header.js` — Toolbar avec titre, device switcher, save
+- `builder/components/TreePanel.js` — Panneau gauche : arborescence des items
+- `builder/components/PreviewPanel.js` — Panneau central : aperçu (placeholder en v1.1.0, iframe en v1.1.4)
+- `builder/components/PropertiesPanel.js` — Panneau droit : propriétés de l'item sélectionné
+
+### Changed
+- `Admin_Menu::enqueue_admin_styles()` détecte la page Builder et appelle `enqueue_builder_assets()` qui :
+  - Vérifie l'existence de `build/index.js`
+  - Lit les dépendances depuis `build/index.asset.php`
+  - Enregistre et enqueue le JS + CSS bundle
+  - Localise `wtmBuilderData` (restUrl, restNonce)
+  - Affiche un notice d'erreur si les assets ne sont pas compilés
+- Nouveau sous-menu "Builder" ajouté dans `Admin_Menu::register_menu()`
+- Nouveau fichier `src/Admin/Pages/Builder.php` qui rend le conteneur `#wtm-builder-root` avec data-attributes (menu-id, is-new)
+- `WTM_VERSION` bumped to `1.1.0`
+
+### Directory Structure (delta)
+```
+woo-total-menu/
+├── builder/                    ← NEW directory (React source)
+│   ├── index.js                ← Entry point
+│   ├── style.css               ← Builder styles
+│   ├── components/
+│   │   ├── App.js              ← Root component
+│   │   ├── Header.js           ← Top toolbar
+│   │   ├── TreePanel.js        ← Left column
+│   │   ├── PreviewPanel.js     ← Center column
+│   │   └── PropertiesPanel.js  ← Right column
+│   └── stores/
+│       ├── menu.js             ← wtm/menu store
+│       └── ui.js               ← wtm/ui store
+├── build/                      ← NEW directory (compiled output)
+│   ├── index.js                (14.3 Ko, minified)
+│   ├── index.asset.php         (dependencies manifest)
+│   ├── style-index.css         (8.0 Ko, minified)
+│   └── style-index-rtl.css     (8.0 Ko, RTL)
+├── package.json                ← NEW
+├── package-lock.json           ← NEW (auto-generated)
+├── webpack.config.js           ← NEW (override entry to builder/index.js)
+└── src/Admin/Pages/
+    └── Builder.php             ← NEW (PHP page that mounts React)
+```
+
 ## [1.0.4] - 2026-06-24
 
 ### Added

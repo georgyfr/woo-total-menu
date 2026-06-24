@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.4
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,20 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.1.0 =
+* New: Builder visuel React — squelette de l'application
+* New: Page admin "Builder" full-screen (menu masqué, admin bar masquée)
+* New: Layout 3 colonnes (arborescence / aperçu / propriétés) avec en-tête (titre + sélecteur device + bouton save)
+* New: Stores @wordpress/data : wtm/menu (CRUD via REST) et wtm/ui (sélection, device, REST config)
+* New: Communication avec l'API REST /wtm/v1/menus via @wordpress/api-fetch
+* New: Pipeline build @wordpress/scripts (Webpack 5 + Babel + DependencyExtractionWebpackPlugin)
+* New: webpack.config.js custom pour entry builder/index.js au lieu de src/index.js
+* New: Style CSS du builder (~400 lignes) avec responsive
+* New: Bouton "Builder" sur la liste des menus (ouvre le builder pour le menu sélectionné)
+* New: package.json avec dépendances @wordpress/* (api-fetch, data, element, i18n, url) et devDependency @wordpress/scripts
+* Update: Admin_Menu::enqueue_admin_styles() détecte la page Builder et charge le bundle
+* Update: Nouvelle page Builder.php (sous-menu wtm-builder) qui rend le conteneur React
 
 = 1.0.4 =
 * New: Validation stricte par type d'item dans Schema_Validator (6 types : link, mega_container, column, widget, title, separator)
