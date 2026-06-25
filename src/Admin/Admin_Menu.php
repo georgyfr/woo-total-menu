@@ -426,15 +426,23 @@ class Admin_Menu {
                 }
 
                 // Pass initial data to JS.
-                $rest_url   = esc_url_raw( rest_url( 'wtm/v1' ) );
-                $rest_nonce = wp_create_nonce( 'wp_rest' );
+                $rest_url           = esc_url_raw( rest_url( 'wtm/v1' ) );
+                $rest_nonce         = wp_create_nonce( 'wp_rest' );
+                // v1.1.4 — preview iframe URL (admin-ajax endpoint serving a
+                // self-contained HTML document driven by postMessage). We use
+                // admin-ajax rather than REST because <iframe src> cannot send
+                // the X-WP-Nonce header required by REST cookie auth.
+                $preview_frame_url  = esc_url_raw(
+                        \WooTotalMenu\Frontend\Preview_Controller::get_endpoint_url()
+                );
 
                 wp_localize_script(
                         'wtm-builder',
                         'wtmBuilderData',
                         array(
-                                'restUrl'   => $rest_url,
-                                'restNonce' => $rest_nonce,
+                                'restUrl'          => $rest_url,
+                                'restNonce'        => $rest_nonce,
+                                'previewFrameUrl'  => $preview_frame_url,
                         )
                 );
         }

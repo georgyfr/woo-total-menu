@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,17 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.1.4 =
+* New: Live preview via iframe + postMessage — le panneau central du Builder affiche maintenant un aperçu en direct du menu (remplace le placeholder statique de v1.1.0)
+* New: Endpoint REST GET /wtm/v1/preview-frame servant un document HTML auto-contenu avec un listener postMessage (renderer JS pour les 6 types d'items + 7 types de widgets)
+* New: Débounce 250 ms sur les postMessage (spec §6.6 — évite de flooder l'iframe pendant un drag)
+* New: Modes responsive (desktop/tablet/mobile) avec bordures "device" pour visualiser le menu en 375px, 768px ou pleine largeur
+* Update: PreviewPanel.js entièrement réécrit (iframe + postMessage + ready signal)
+* Update: UI store étendu avec previewFrameUrl
+* Update: Admin_Menu passe previewFrameUrl au Builder via wp_localize_script
+* Update: Bootstrap instancie Preview_Controller sur chaque requête (l'iframe charge via REST, pas admin)
+* Update: Bump version 1.1.3 → 1.1.4 (woo-total-menu.php, package.json, readme.txt)
 
 = 1.1.3 =
 * Fix: Indicateur de drop qui ne se rafraîchissait pas en temps réel quand le curseur se déplaçait verticalement à l'intérieur d'un même item (le calcul utilisait cursorY figé au pointerdown au lieu du cursorY courant)

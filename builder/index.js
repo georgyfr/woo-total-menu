@@ -26,6 +26,7 @@ if (container) {
                 menu: null,
                 restNonce: '',
                 restUrl: '',
+                previewFrameUrl: '',
                 isNew: false,
         };
 

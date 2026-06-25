@@ -106,6 +106,12 @@ class Bootstrap {
                 // API REST (loaded on every request including AJAX).
                 $this->services['rest_menus']  = new \WooTotalMenu\Api\Menu_Controller();
 
+                // v1.1.4 — Preview iframe controller (REST /wtm/v1/preview-frame).
+                // Loaded on every request so the iframe document is reachable
+                // via REST even when is_admin() is false (the iframe loads
+                // through the REST URL, not the admin dashboard).
+                $this->services['preview']     = new \WooTotalMenu\Frontend\Preview_Controller();
+
                 // Admin (only in wp-admin context).
                 if ( is_admin() ) {
                         $this->services['admin_menu']  = new \WooTotalMenu\Admin\Admin_Menu();

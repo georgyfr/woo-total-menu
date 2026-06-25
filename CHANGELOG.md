@@ -5,6 +5,60 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-06-25
+
+### Added
+
+- **Live preview via iframe + postMessage** (spec §6.3, §6.6, §15.4) : le panneau
+  central du Builder n'est plus un placeholder statique. Il affiche désormais un
+  iframe qui restitue en direct la configuration du menu.
+  - Nouveau endpoint REST `GET /wtm/v1/preview-frame` (`Preview_Controller.php`)
+    qui sert un document HTML auto-contenu (CSS + JS inline, ~10 Ko) avec un
+    listener `postMessage`. Le rendu du menu est fait côté JS dans l'iframe à
+    partir de la config envoyée par le parent.
+  - `PreviewPanel.js` entièrement réécrit : iframe `<iframe ref src=...>` +
+    listener `wtm-preview-ready` (signal de l'iframe vers le parent) +
+    `postMessage` parent → iframe avec `{ type: 'wtm-render', config, device }`.
+  - **Debounce 250 ms** sur les messages (spec §6.6 — "postMessage debounced
+    200-300 ms") pour éviter de flooder l'iframe pendant un drag.
+  - **Rendu immédiat sur changement de device** (pas de debounce) pour que le
+    changement de résolution soit instantané pour l'utilisateur.
+  - Support des 6 types d'items (link, mega_container, column, widget, title,
+    separator) + 7 types de widgets (html, banner, product_grid, category_grid,
+    mini_cart, search, custom_link) dans le rendu preview.
+  - Modes responsive : desktop (100%), tablet (768px avec bordure sombre), mobile
+    (375px avec bordure type smartphone).
+
+### Changed
+
+- `builder/index.js` : `initialState.previewFrameUrl` ajouté au fallback
+  `wtmBuilderData`.
+- `builder/components/App.js` : `setRestConfig` reçoit maintenant
+  `previewFrameUrl` en plus de `restUrl`/`restNonce`.
+- `builder/stores/ui.js` : nouvel état `previewFrameUrl`, nouvelle action
+  passée à `setRestConfig`, nouveau sélecteur `getPreviewFrameUrl`.
+- `src/Admin/Admin_Menu.php` : `wp_localize_script('wtmBuilderData')` inclut
+  maintenant `previewFrameUrl` (URL REST du endpoint preview-frame).
+- `src/Bootstrap.php` : instancie `Frontend\Preview_Controller` sur chaque
+  requête (l'iframe charge via l'URL REST, pas via l'admin).
+- `builder/components/PreviewPanel.js` : réécriture complète (placeholder
+  statique → iframe + postMessage).
+- `builder/style.css` : ajout des classes `.wtm-preview__iframe`,
+  `.wtm-preview__iframe-loading`, `.wtm-preview__footer`,
+  `.wtm-preview__device-pill`, et des bordures "device" pour mobile/tablet.
+
+### Security
+
+- L'endpoint `preview-frame` requiert la capacité `wtm_manage_menus`
+  (permission_callback `current_user_can`).
+- `X-Frame-Options: SAMEORIGIN` envoyé sur la réponse — l'iframe ne peut être
+  embarquée que sur le même domaine admin.
+- Le sandbox attribute `allow-same-origin allow-scripts` permet à l'iframe de
+  recevoir les messages tout en bloquant les formulaires et la navigation
+  externe.
+- Validation `event.source !== window.parent` côté iframe pour n'accepter que
+  les messages venant du builder.
+
 ## [1.1.3] - 2026-06-25
 
 ### Fixed
