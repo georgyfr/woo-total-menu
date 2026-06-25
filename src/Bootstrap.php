@@ -141,6 +141,16 @@ class Bootstrap {
                 $this->services['hf_renderer'] = new \WooTotalMenu\Frontend\Header_Footer_Renderer( $this->services['menu_renderer'] );
                 $this->services['hf_injector'] = new \WooTotalMenu\Frontend\Header_Footer_Injector( $this->services['hf_renderer'] );
 
+                // v1.5.0 — Templates library (spec §1.4.2 — bibliothèque de templates intégrés).
+                //   - Template_Registry: catalogue statique (12 templates intégrés).
+                //     Lazy-built puis filtré par `wtm_templates_catalog`. Pas besoin
+                //     d'instanciation explicite (classe 100% statique) mais on garde
+                //     une entrée dans le container pour symmetry / debug / tests.
+                //   - Templates_Controller: 3 routes REST /wtm/v1/templates,
+                //     /templates/{id}, /templates/{id}/apply. Le contrôleur instancie
+                //     ses hooks lui-même via son constructeur.
+                $this->services['rest_templates'] = new \WooTotalMenu\Api\Templates_Controller();
+
                 // Admin (only in wp-admin context).
                 if ( is_admin() ) {
                         $this->services['admin_menu']  = new \WooTotalMenu\Admin\Admin_Menu();

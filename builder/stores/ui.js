@@ -17,6 +17,10 @@
  *   Determines which canvas is shown in the central column and which
  *   configuration is sent to the preview iframe.
  *
+ * v1.5.0 additions:
+ * - `isTemplatesOpen` boolean — whether the Templates Gallery modal is open.
+ *   `openTemplates()` / `closeTemplates()` actions toggle this flag.
+ *
  * @package WooTotalMenu
  * @since 1.1.0
  */
@@ -39,6 +43,8 @@ const DEFAULT_STATE = {
         previewRevisionId: null,
         // v1.4.0 — active Builder mode: 'menu' (default), 'header', or 'footer'.
         activeMode: 'menu',
+        // v1.5.0 — Templates Gallery modal open/closed.
+        isTemplatesOpen: false,
 };
 
 const actions = {
@@ -95,6 +101,23 @@ const actions = {
         setMode(mode) {
                 return { type: 'SET_MODE', mode };
         },
+        // === v1.5.0 — Templates Gallery modal ===
+        /**
+         * Open the Templates Gallery modal.
+         *
+         * @return {Object} Action.
+         */
+        openTemplates() {
+                return { type: 'SET_TEMPLATES_OPEN', isOpen: true };
+        },
+        /**
+         * Close the Templates Gallery modal.
+         *
+         * @return {Object} Action.
+         */
+        closeTemplates() {
+                return { type: 'SET_TEMPLATES_OPEN', isOpen: false };
+        },
 };
 
 const selectors = {
@@ -127,6 +150,10 @@ const selectors = {
         getActiveMode(state) {
                 return state.activeMode || 'menu';
         },
+        // v1.5.0
+        isTemplatesOpen(state) {
+                return !!state.isTemplatesOpen;
+        },
 };
 
 const reducer = (state = DEFAULT_STATE, action) => {
@@ -150,6 +177,8 @@ const reducer = (state = DEFAULT_STATE, action) => {
                         return { ...state, previewRevisionId: action.revisionId };
                 case 'SET_MODE':
                         return { ...state, activeMode: action.mode };
+                case 'SET_TEMPLATES_OPEN':
+                        return { ...state, isTemplatesOpen: action.isOpen };
                 default:
                         return state;
         }

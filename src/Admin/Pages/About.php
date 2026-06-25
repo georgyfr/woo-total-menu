@@ -40,7 +40,7 @@ class About {
                         array( 'v1.2.x', 'Rendu frontend (Menu_Walker, méga menu, off-canvas mobile)', 'done' ),
                         array( 'v1.3.x', 'Widgets WooCommerce avancés (recent_posts, social_icons, newsletter, filters, mini_cart drawer, search live)', 'done' ),
                         array( 'v1.4.x', 'Header & Footer Builder (ModulePalette, LayoutCanvas, 9 module types, injection globale)', 'done' ),
-                        array( 'v1.5.x', 'Système de templates (12+ templates intégrés)', 'todo' ),
+                        array( 'v1.5.x', 'Système de templates — 12 templates intégrés (4 menus + 4 headers + 4 footers), galerie visuelle, API REST /wtm/v1/templates', 'done' ),
                         array( 'v1.6.x', 'Rôles, blocs Gutenberg, compatibilité Elementor/Bricks/Oxygen, multisite', 'todo' ),
                         array( 'v1.7.x', 'Menus conditionnels, analytics simple', 'todo' ),
                 );

@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,21 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.5.0 =
+* New: **Système de templates intégrés** (spec §1.4.2) — 12 templates prêts à l'emploi, répartis en 4 menus + 4 headers + 4 footers. Catégorisation métier : ecommerce (5), minimal (4), blog (1), corporate (1), electronics (1).
+* New: **4 templates de menus** : Menu horizontal simple (4 liens plats — blog/vitrine), Méga menu boutique de mode (2 méga containers Femmes/Hommes + product_grid + banner), Méga menu électronique (3 méga containers Smartphones/Ordinateurs/TV + bannière promo), Menu vertical sidebar (3 catégories + widget filtres WooCommerce).
+* New: **4 templates de headers** : Header e-commerce classique (Logo | Menu | Recherche + Panier + Compte), Header minimaliste (Logo | Menu, 2 colonnes), Header promotionnel (top bar promo + ligne main), Header sticky centré (logo centré + menu centré, style éditorial/luxe).
+* New: **4 templates de footers** : Footer e-commerce 4 colonnes (about + 2 menus + newsletter), Footer minimaliste (copyright + social), Footer corporate 4 colonnes (logo + 3 menus), Footer sombre accessible WCAG AA (4 cols + bottom bar RGPD).
+* New: **Backend `Template_Registry`** (`src/Core/Template_Registry.php`, ~840 lignes) — catalogue statique lazy-built, validation via `Schema_Validator::validate_config()` ou `validate_layout()`, sélection automatique de la meta cible (`_wtm_config` / `_wtm_header_config` / `_wtm_footer_config`), filtre `wtm_templates_catalog` pour extension tierce, action `wtm_template_applied` après application.
+* New: **API REST `/wtm/v1/templates`** (`src/Api/Templates_Controller.php`, ~330 lignes) — 3 endpoints : `GET /templates` (liste filtrable par type/category/search), `GET /templates/{id}` (détail avec config), `POST /templates/{id}/apply` (applique à un menu). Lecture publique, écriture réservée à `edit_posts`.
+* New: **Builder React — Galerie de templates** — nouveau bouton "Galerie de templates" dans le Header (icône dashicons-layout). Modal avec toolbar (tabs Tous/Menus/Headers/Footers), recherche plein-texte, filtre par catégorie. `TemplateCard` affiche un mini-aperçu CSS synthétique (10 variants), nom, description, tags et bouton "Appliquer". Pré-filtre automatique selon le mode actif. Confirmation avant application. Fermeture Escape sauf si application en cours.
+* New: **Store Redux `wtm/templates`** (`builder/stores/templates.js`, ~260 lignes) — cache du catalogue, états de filtre (`filterType`/`filterCategory`/`filterSearch`), états d'application (`isApplying`/`applyError`/`lastApplied`), sélecteur `getFilteredTemplates`, action async `applyTemplate(id)` qui POST → reload menu → reload layout → ferme la galerie.
+* New: **Store `wtm/ui` étendu** — nouvel état `isTemplatesOpen` + actions `openTemplates()` / `closeTemplates()`.
+* New: **2 hooks/filters développeurs** — `wtm_templates_catalog` (filter, modifie le catalogue) + `wtm_template_applied` (action, déclenchée après application).
+* Update: +480 lignes CSS Builder pour la galerie (modal, cards, mini-previews CSS pour 10 types de thumbnails, responsive mobile 768px).
+* Update: Version bumpée à 1.5.0 dans `woo-total-menu.php`, `package.json`, `readme.txt`.
+* Update: `About.php` — roadmap v1.5.x marquée `done`. `versions/README.md` — entrée v1.5.0 dans le sommaire.
 
 = 1.4.0 =
 * New: **Header & Footer Builder visuel** (spec §3.6, §3.7, §4.6.5) — nouveau mode "Header" et "Footer" dans le Builder React accessible via 3 tabs Menu / Header / Footer dans l'en-tête. Layout 3-colonnes mode-aware : ModulePalette (gauche) + LayoutCanvas (centre) + ModuleProperties (droite) en mode header/footer, layout classique TreePanel + PreviewPanel + PropertiesPanel en mode menu. Grille visuelle rows → columns → modules avec resize des colonnes (largeur 1-12), drag-and-drop HTML5 des modules, déplacement des modules entre colonnes.

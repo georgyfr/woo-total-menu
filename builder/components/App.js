@@ -6,6 +6,8 @@
  *   - header mode  → ModulePalette (left) + LayoutCanvas (center) + ModuleProperties (right)
  *   - footer mode  → same as header mode
  *
+ * v1.5.0 — mounts the Templates Gallery modal on top of the Builder.
+ *
  * @package WooTotalMenu
  * @since 1.1.0
  */
@@ -20,9 +22,11 @@ import PreviewPanel from './PreviewPanel';
 import PropertiesPanel from './PropertiesPanel';
 import HistoryPanel from './HistoryPanel';
 import LayoutBuilder from './LayoutBuilder';
+import { TemplateGallery } from './TemplateGallery';
 import { WTM_STORE_NAME } from '../stores/menu';
 import { UI_STORE_NAME } from '../stores/ui';
 import { LAYOUT_STORE_NAME } from '../stores/layout';
+import '../stores/templates'; // register wtm/templates store as side-effect
 
 export default function App({ initialState }) {
         const { loadMenu, setError, setDirty } = useDispatch(WTM_STORE_NAME);
@@ -100,6 +104,9 @@ export default function App({ initialState }) {
                         )}
 
                         <HistoryPanel />
+
+                        {/* v1.5.0 — Templates Gallery modal (mounted at the top level). */}
+                        <TemplateGallery />
                 </div>
         );
 }

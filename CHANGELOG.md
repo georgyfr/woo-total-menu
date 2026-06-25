@@ -5,6 +5,123 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-06-26
+
+### Added
+
+- **Système de templates intégrés** (spec §1.4.2 — bibliothèque de templates) :
+  - 12 templates prêts à l'emploi, répartis en 3 catégories :
+    - **4 templates de menus** : Menu horizontal simple (blog/vitrine),
+      Méga menu boutique de mode (2 méga containers + widgets produits),
+      Méga menu électronique (3 méga containers + bannière promo),
+      Menu vertical sidebar (catalogue + widget filtres).
+    - **4 templates de headers** : Header e-commerce classique
+      (Logo | Menu | Recherche + Panier + Compte), Header minimaliste
+      (2 colonnes), Header promotionnel (top bar promo + ligne main),
+      Header sticky centré (style éditorial / luxe).
+    - **4 templates de footers** : Footer e-commerce 4 colonnes
+      (about + 2 menus + newsletter), Footer minimaliste (copyright +
+      social), Footer corporate 4 colonnes (logo + 3 menus), Footer
+      sombre accessible WCAG AA.
+  - Catégorisation métier : `ecommerce`, `blog`, `corporate`, `minimal`,
+    `electronics` — filtrable côté UI.
+
+- **Backend PHP — `Template_Registry`** (`src/Core/Template_Registry.php`,
+  ~840 lignes) :
+  - Catalogue statique lazy-built, mis en cache dans une propriété
+    statique `$catalog`.
+  - 4 méthodes publiques : `all()`, `get($id)`, `by_type($type)`,
+    `categories()`, `apply_to_menu($menu_id, $template_id, $mode)`.
+  - Validation systématique via `Schema_Validator::validate_config()`
+    (mode menu) ou `Schema_Validator::validate_layout()` (mode
+    header/footer) avant l'écriture de la meta.
+  - Sélection automatique de la meta cible (`_wtm_config`,
+    `_wtm_header_config`, `_wtm_footer_config`) selon le mode.
+  - Cohérence type template <-> mode appliqué (refus si mismatch).
+  - Filtre `wtm_templates_catalog` pour ajouter / modifier / supprimer
+    des templates depuis une extension tierce.
+  - Action `wtm_template_applied` déclenchée après application réussie.
+
+- **API REST — `Templates_Controller`** (`src/Api/Templates_Controller.php`,
+  ~330 lignes) :
+  - `GET /wtm/v1/templates` — liste filtrable par `type`, `category`,
+    `search` (recherche plein-texte sur name, description, preview, tags).
+  - `GET /wtm/v1/templates/{id}` — détail d'un template avec `config`
+    complète.
+  - `POST /wtm/v1/templates/{id}/apply` — applique un template à un menu
+    (body : `{ menu_id, mode }`).
+  - Lecture publique du catalogue ; écriture réservée aux utilisateurs
+    avec la capacité `edit_posts`.
+  - Schéma JSON public exposé sur `/wp-json/wtm/v1/templates`.
+
+- **Builder React — Galerie de templates** (spec §1.4.2) :
+  - Nouveau bouton "Galerie de templates" dans le Header du Builder
+    (icône `dashicons-layout`).
+  - Modal `TemplateGallery` avec toolbar (tabs Tous / Menus / Headers /
+    Footers), recherche plein-texte, filtre par catégorie.
+  - `TemplateCard` : carte individuelle avec mini-aperçu CSS synthétique
+    (10 variantes : menu-simple, menu-mega, menu-vertical, header-3cols,
+    header-2cols, header-2rows, header-centered, footer-4cols,
+    footer-minimal, footer-dark) + nom + description + tags + bouton
+    "Appliquer".
+  - Confirmation native (`window.confirm`) avant application (écrase la
+    config actuelle).
+  - Pré-filtre automatique selon le mode actif (Header/Footer/Menu) à
+    l'ouverture de la galerie.
+  - Fermeture au clavier (Escape) sauf si une application est en cours.
+  - Sortie automatique de la galerie après application réussie.
+
+- **Store Redux `wtm/templates`** (`builder/stores/templates.js`,
+  ~260 lignes) :
+  - Catalogue en cache (fetch paresseux via `fetchTemplates()`).
+  - États de filtre : `filterType`, `filterCategory`, `filterSearch`.
+  - États d'application : `isApplying`, `applyError`, `lastApplied`.
+  - Sélecteur `getFilteredTemplates` combinant les 3 filtres.
+  - Sélecteur `getCategories` retournant les catégories distinctes avec
+    compte et libellés traduits.
+  - Action async `applyTemplate(id)` qui : POST → reload menu → reload
+    layout (si mode header/footer) → ferme la galerie.
+
+- **Store `wtm/ui` étendu** :
+  - Nouvel état `isTemplatesOpen` (boolean).
+  - Actions `openTemplates()` / `closeTemplates()`.
+
+- **Hook développeur** :
+  - `wtm_templates_catalog` (filter) — modification du catalogue de
+    templates intégrés (ajout, suppression, modification).
+
+- **Action développeur** :
+  - `wtm_template_applied` — déclenchée après application d'un template
+    à un menu. Reçoit `(menu_id, template_id, mode, template)`.
+
+- **Documentation** :
+  - `versions/v1.5.0.md` — description complète (fichier dédié).
+  - Mise à jour `docs/schema.md` — référence aux templates dans les
+    exemples complets.
+
+### Changed
+
+- **`src/Bootstrap.php`** : instancie `Templates_Controller` sur chaque
+  requête (les routes REST doivent être disponibles côté admin et
+  frontend).
+- **`builder/components/App.js`** : monte le composant `TemplateGallery`
+  au plus haut niveau (au-dessus de `HistoryPanel`) ; importe le store
+  `wtm/templates` pour effet de bord (enregistrement).
+- **`builder/components/Header.js`** : ajoute le bouton "Galerie de
+  templates" dans la barre d'historique.
+- **`builder/stores/ui.js`** : nouvel état `isTemplatesOpen` + actions
+  `openTemplates` / `closeTemplates`.
+- **`builder/style.css`** : +480 lignes pour la galerie (modal, cards,
+  mini-previews CSS pour 10 types de thumbnails, responsive mobile).
+- **`src/Admin/Pages/About.php`** : roadmap v1.5.x marquée `done`.
+- **`versions/README.md`** : entrée v1.5.0 dans le sommaire.
+- **`readme.txt`** : section `= 1.5.0 =` ajoutée au changelog utilisateur.
+- **`package.json`** : version bumpée à `1.5.0`.
+
+### Fixed
+
+- Aucun bug rapporté dans cette version (nouvelle fonctionnalité).
+
 ## [1.4.0] - 2026-06-26
 
 ### Added

@@ -31,7 +31,7 @@ Chaque fichier `vX.Y.Z.md` décrit :
 | [v1.2.0](./v1.2.0.md) | 2026-06-25 | ✅ Livrée | Rendu frontend complet — Menu_Renderer, Location_Interceptor, Dynamic_CSS, Shortcode `[wtm_menu]`, assets frontend conditionnels, 4 widgets WooCommerce rendus côté visiteur |
 | [v1.3.0](./v1.3.0.md) | 2026-06-25 | ✅ Livrée | Widgets WooCommerce avancés — 4 nouveaux widgets (recent_posts, social_icons, newsletter, filters) + upgrades mini_cart (drawer AJAX) et search (suggestions live) + 2 routes REST publiques + 1 admin-ajax handler |
 | [v1.4.0](./v1.4.0.md) | 2026-06-26 | ✅ Livrée | Header & Footer Builder — ModulePalette + LayoutCanvas + ModuleProperties, 9 module types, Header_Footer_Renderer + Header_Footer_Injector (wp_body_open + wp_footer), 2 nouvelles meta `_wtm_header_config`/`_wtm_footer_config`, settings `header_footer`, 5 hooks/filters développeurs |
-| v1.5.x | à venir | 📋 Planifiée | Système de templates (12+ templates intégrés) |
+| [v1.5.0](./v1.5.0.md) | 2026-06-26 | ✅ Livrée | Système de templates — 12 templates intégrés (4 menus + 4 headers + 4 footers), Template_Registry + Templates_Controller (3 routes REST /wtm/v1/templates), galerie visuelle Builder avec mini-previews CSS, store Redux wtm/templates, 2 hooks/filters développeurs |
 | v1.6.x | à venir | 📋 Planifiée | Rôles, blocs Gutenberg, compatibilité Elementor/Bricks/Oxygen, multisite |
 | v1.7.x | à venir | 📋 Planifiée | Menus conditionnels, analytics simple |
 
@@ -52,7 +52,7 @@ Ce projet suit une adaptation du **Semantic Versioning** :
 - **v1.2.x** — Phase Rendu Frontend : Menu_Walker, méga menu, off-canvas
 - **v1.3.x** — Phase Widgets : widgets WooCommerce
 - **v1.4.x** — Phase Header/Footer : builders complémentaires ✅
-- **v1.5.x** — Phase Templates : bibliothèque de templates
+- **v1.5.x** — Phase Templates : bibliothèque de templates ✅
 - **v1.6.x** — Phase Polish : rôles, blocs, compatibilité, multisite
 - **v1.7.x** — Phase Bonus : menus conditionnels, analytics simple
 

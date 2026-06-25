@@ -14,6 +14,11 @@
  * - Mode switcher: Menu | Header | Footer (spec §4.6.5, §9.5.3).
  *   Switches the central column between TreePanel+Preview and LayoutBuilder.
  *
+ * v1.5.0 additions:
+ * - "Templates" button — opens the Templates Gallery modal (spec §1.4.2).
+ *   Loads the catalog via REST /wtm/v1/templates and lets the user apply
+ *   a pre-built template to the current menu/header/footer.
+ *
  * @package WooTotalMenu
  * @since 1.1.0
  */
@@ -44,7 +49,7 @@ export default function Header({ title, menuType, isDirty, isLoading }) {
         const canUndo = useSelect((select) => select(WTM_STORE_NAME).canUndo(), []);
         const canRedo = useSelect((select) => select(WTM_STORE_NAME).canRedo(), []);
         const menu = useSelect((select) => select(WTM_STORE_NAME).getMenu(), []);
-        const { setDevice, setAnnouncement, openHistory, setMode } = useDispatch(UI_STORE_NAME);
+        const { setDevice, setAnnouncement, openHistory, setMode, openTemplates } = useDispatch(UI_STORE_NAME);
 
         // === Global keyboard shortcuts (spec §9.9) ===
         useEffect(() => {
@@ -96,6 +101,12 @@ export default function Header({ title, menuType, isDirty, isLoading }) {
                 }
         };
 
+        // v1.5.0 — Open the Templates Gallery modal.
+        const handleTemplates = () => {
+                openTemplates();
+                setAnnouncement(__('Galerie de templates ouverte.', 'woo-total-menu'));
+        };
+
         return (
                 <header className="wtm-builder__header">
                         <div className="wtm-builder__header-left">
@@ -138,6 +149,17 @@ export default function Header({ title, menuType, isDirty, isLoading }) {
                                                 aria-label={__('Historique des révisions', 'woo-total-menu')}
                                         >
                                                 <span className="dashicons dashicons-backup"></span>
+                                        </button>
+                                        {/* v1.5.0 — Templates Gallery button */}
+                                        <button
+                                                type="button"
+                                                className="wtm-builder__history-btn wtm-builder__templates-btn"
+                                                onClick={handleTemplates}
+                                                disabled={!menu?.id || isLoading}
+                                                title={__('Galerie de templates', 'woo-total-menu')}
+                                                aria-label={__('Galerie de templates', 'woo-total-menu')}
+                                        >
+                                                <span className="dashicons dashicons-layout"></span>
                                         </button>
                                 </div>
 
