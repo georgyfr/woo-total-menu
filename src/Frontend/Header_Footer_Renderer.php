@@ -11,7 +11,9 @@
  *
  * Module types (Schema_Validator::MODULE_TYPES):
  *   - logo       : Image + link (defaults to home).
- *   - menu       : Renders an existing wtm_menu post by ID.
+ *   - menu       : Renders an existing wtm_menu post by ID, OR a WordPress
+ *                  native nav_menu (taxonomy=nav_menu) by term_id when the
+ *                  `menu_source` setting is set to "wp" (default "wtm").
  *   - search     : Search bar with live suggestions (reuses the search widget UI).
  *   - cart       : Mini-cart icon with AJAX fragments + drawer.
  *   - button     : CTA button (label, link, style).
@@ -527,11 +529,15 @@ class Header_Footer_Renderer {
         }
 
         /**
-         * Render a `menu` module — delegates to Menu_Renderer for a referenced wtm_menu.
+         * Render a `menu` module — delegates to Menu_Renderer for a wtm_menu,
+         * OR to wp_nav_menu() for a WordPress native nav_menu.
          *
          * Settings:
-         *   - menu_id  (int)  Required. Post ID of the wtm_menu to render.
-         *   - location (str)  Optional location slug.
+         *   - menu_source (str) 'wtm' (default) — references a wtm_menu post by ID.
+         *                       'wp'           — references a WordPress native
+         *                                        nav_menu by term_id.
+         *   - menu_id    (int)  Required. Post ID (wtm) or term_id (wp) to render.
+         *   - location   (str)  Optional location slug (wtm only).
          *
          * @param array $s Module settings.
          * @param int   $menu_id Source menu post ID (unused).
@@ -542,20 +548,96 @@ class Header_Footer_Renderer {
                 if ( $ref_id <= 0 ) {
                         return '';
                 }
+                $source   = isset( $s['menu_source'] ) ? sanitize_key( $s['menu_source'] ) : 'wtm';
                 $location = isset( $s['location'] ) ? sanitize_key( $s['location'] ) : '';
-                $html = $this->menu_renderer->render_by_id( $ref_id, $location );
+
+                if ( 'wp' === $source ) {
+                        // WordPress native nav_menu (taxonomy=nav_menu) — render
+                        // through the standard wp_nav_menu() walker so any menu
+                        // created at /wp-admin/nav-menus.php is honoured.
+                        $html = $this->render_wp_nav_menu( $ref_id, $location );
+                } else {
+                        $html = $this->menu_renderer->render_by_id( $ref_id, $location );
+                }
 
                 /**
                  * Fires when a header/footer `menu` module is rendered.
                  *
                  * @since 1.4.0
                  *
-                 * @param int $ref_id    The referenced wtm_menu ID.
-                 * @param int $menu_id   The source menu (header/footer carrier).
+                 * @param int    $ref_id    The referenced menu ID (post_id or term_id).
+                 * @param int    $menu_id   The source menu (header/footer carrier).
+                 * @param string $source    'wtm' or 'wp'.
                  */
                 do_action( 'wtm_rendered_location', $ref_id, $location ?: 'header_footer_module' );
 
                 return $html;
+        }
+
+        /**
+         * Render a WordPress native nav_menu by term_id.
+         *
+         * Used by the `menu` module when `menu_source` is "wp". Wraps
+         * wp_nav_menu() with a few sane defaults so the markup matches
+         * the rest of the plugin's output (semantic <nav>, wtm classes).
+         *
+         * @since 1.7.1
+         *
+         * @param int    $term_id  nav_menu term_id.
+         * @param string $location Optional location slug (used for the wrapper class).
+         * @return string HTML markup (empty if the menu does not exist).
+         */
+        private function render_wp_nav_menu( $term_id, $location = '' ) {
+                $term_id = (int) $term_id;
+                if ( $term_id <= 0 ) {
+                        return '';
+                }
+
+                $term = get_term( $term_id, 'nav_menu' );
+                if ( ! $term || is_wp_error( $term ) ) {
+                        return '';
+                }
+
+                $location_class = $location ? ' wtm-nav--' . sanitize_html_class( $location ) : '';
+
+                /**
+                 * Filter the wp_nav_menu() args used to render a native nav_menu
+                 * inside a header/footer `menu` module.
+                 *
+                 * @since 1.7.1
+                 *
+                 * @param array    $args     wp_nav_menu() arguments.
+                 * @param WP_Term  $term     The nav_menu term being rendered.
+                 * @param string   $location Optional location slug.
+                 */
+                $args = apply_filters(
+                        'wtm_wp_nav_menu_args',
+                        array(
+                                'menu'            => $term,
+                                'menu_class'      => 'wtm-nav__menu wtm-wp-nav__menu',
+                                'menu_id'         => '',
+                                'container'       => 'nav',
+                                'container_class' => 'wtm-nav wtm-wp-nav' . $location_class,
+                                'container_id'    => '',
+                                'fallback_cb'     => false,
+                                'echo'            => false,
+                                'depth'           => 0,
+                        ),
+                        $term,
+                        $location
+                );
+
+                $html = wp_nav_menu( $args );
+
+                /**
+                 * Filter the rendered HTML of a native nav_menu module.
+                 *
+                 * @since 1.7.1
+                 *
+                 * @param string  $html Rendered HTML.
+                 * @param WP_Term $term The nav_menu term.
+                 */
+                return apply_filters( 'wtm_wp_nav_menu_html', $html, $term );
         }
 
         /**

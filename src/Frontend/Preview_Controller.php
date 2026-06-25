@@ -323,7 +323,10 @@ class Preview_Controller {
         inner = el("a", { className: "wtm-pv-logo", href: s.url || "#", textContent: s.alt || "Logo" });
         break;
       case "menu":
-        inner = el("div", { className: "wtm-pv-mod-menu", textContent: "[Menu #" + (s.menu_id || "?") + "]" });
+        var menuLabel = s.menu_source === "wp"
+          ? "[Menu WP #" + (s.menu_id || "?") + "]"
+          : "[Menu WTM #" + (s.menu_id || "?") + "]";
+        inner = el("div", { className: "wtm-pv-mod-menu", textContent: menuLabel });
         break;
       case "search":
         inner = el("input", { type: "search", className: "wtm-pv-search-input", placeholder: s.placeholder || "Rechercher…" });

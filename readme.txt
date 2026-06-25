@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,15 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.7.1 =
+* Fix: **Détection des menus WordPress natifs** — le module `menu` du Header/Footer Builder n'acceptait que les `wtm_menu` (post_id). Désormais, un dropdown unifié liste aussi les `nav_menu` natifs créés via `Apparence → Menus` (`/wp-admin/nav-menus.php`). Nouveau setting `menu_source` (`"wtm"` par défaut, `"wp"` pour les menus natifs). 100 % rétro-compatible.
+* New: **Route REST `GET /wtm/v1/wp-menus`** (`src/Api/WP_Menus_Controller.php`) — liste tous les `nav_menu` natifs avec `term_id`, `name`, `slug`, `count`, `locations` et `edit_url`. Permission : `wtm_manage_menus`.
+* New: **Hooks `wtm_wp_nav_menu_args` et `wtm_wp_nav_menu_html`** — filtres pour surcharger respectivement les arguments `wp_nav_menu()` et le HTML rendu final d'un menu WP natif dans un module `menu`.
+* Changed: **`Header_Footer_Renderer::render_module_menu()`** — détecte `menu_source` et délègue vers `wp_nav_menu()` (avec wrapper `<nav class="wtm-nav wtm-wp-nav">`) pour la source `"wp"`, ou vers `Menu_Renderer::render_by_id()` (comportement inchangé) pour `"wtm"`.
+* Changed: **`ModuleProperties.js`** — nouveau composant `MenuModuleEditor` avec dropdown `<select>` groupant les deux sources via `<optgroup>`. Cache module-level pour la session.
+* Changed: **`Preview_Controller.php`** — label de prévisualisation différencié `[Menu WP #N]` vs `[Menu WTM #N]`.
+* Changed: **Plugin version** — bump `1.7.0` → `1.7.1` (en-tête + constante `WTM_VERSION` + `package.json`).
 
 = 1.7.0 =
 * New: **Menus conditionnels** — `Condition_Evaluator` (`src/Core/Condition_Evaluator.php`, ~330 lignes). 10 types de règles de visibilité (`page_type`, `post_id`, `post_type`, `taxonomy`, `user_state`, `user_role`, `device`, `date_range`, `url_param`, `language`). Logique ET (toutes) ou OU (au moins une) avec court-circuit. Cache par requête. Validation statique via `Condition_Evaluator::validate()`.

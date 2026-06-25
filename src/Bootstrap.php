@@ -170,6 +170,12 @@ class Bootstrap {
                 //   - GET  /analytics/stats  : agrégats journaliers pour le dashboard.
                 $this->services['rest_analytics'] = new \WooTotalMenu\Api\Analytics_Controller();
 
+                // v1.7.1 — WP Native Menus Controller (1 route REST /wtm/v1/wp-menus).
+                //   - GET /wp-menus : liste les nav_menus WordPress natifs (taxonomy=nav_menu)
+                //     créés via /wp-admin/nav-menus.php, pour le dropdown du module `menu`
+                //     du Header/Footer Builder.
+                $this->services['rest_wp_menus'] = new \WooTotalMenu\Api\WP_Menus_Controller();
+
                 // v1.6.0 — Gutenberg blocks (3 blocs server-render : menu, header, footer).
                 //   - register_block_type() appelé sur `init` par Gutenberg_Blocks.
                 //   - Editor JS minimaliste (placeholder + sidebar controls) — le rendu

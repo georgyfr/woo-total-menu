@@ -5,6 +5,94 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-06-26
+
+### Added
+
+- **Détection des menus WordPress natifs dans le module `menu`** du
+  Header/Footer Builder. Auparavant, le module `menu` n'acceptait que les
+  `wtm_menu` (CPT du plugin) via leur `post_id` saisi manuellement. Les
+  menus WordPress natifs créés via `Apparence → Menus`
+  (`/wp-admin/nav-menus.php`) n'étaient pas détectés.
+
+  Désormais, le module `menu` expose un **dropdown unifié** présentant :
+
+  - les `wtm_menu` posts (post_id) ;
+  - les `wp_nav_menu` natifs (term_id de la taxonomy `nav_menu`).
+
+  La sélection est stockée via deux settings complémentaires :
+
+  - `menu_source` : `"wtm"` (défaut, rétro-compatible) ou `"wp"` ;
+  - `menu_id` : `post_id` (wtm) ou `term_id` (wp).
+
+  Côté frontend, le renderer `Header_Footer_Renderer::render_module_menu()`
+  détecte le `menu_source` et délègue vers `wp_nav_menu()` (avec les classes
+  `wtm-nav wtm-wp-nav`) lorsque la source est `"wp"`, ou vers
+  `Menu_Renderer::render_by_id()` (comportement inchangé) pour `"wtm"`.
+
+- **Nouvelle route REST `GET /wtm/v1/wp-menus`**
+  (`src/Api/WP_Menus_Controller.php`) :
+  - Liste tous les `nav_menu` natifs avec `id` (term_id), `name`, `slug`,
+    `count`, `locations` et `edit_url`.
+  - Retourne également les emplacements enregistrés via
+    `get_registered_nav_menus()`.
+  - Permission : `wtm_manage_menus`.
+
+- **Hook `wtm_wp_nav_menu_args`** (filter) — permet de surcharger les
+  arguments passés à `wp_nav_menu()` lors du rendu d'un menu natif
+  dans un module `menu` du Header/Footer Builder.
+
+- **Hook `wtm_wp_nav_menu_html`** (filter) — permet de filtrer le HTML
+  final rendu par `wp_nav_menu()` pour un module `menu` de source `"wp"`.
+
+### Changed
+
+- `Header_Footer_Renderer::render_module_menu()` accepte désormais un
+  setting `menu_source` (`"wtm"` par défaut pour préserver la
+  rétro-compatibilité). Si `menu_source` est absent et que `menu_id`
+  correspond à un `wtm_menu` post publié, le rendu reste identique aux
+  versions précédentes.
+
+- `ModuleProperties.js` — la section `case 'menu'` est désormais gérée
+  par un composant dédié `MenuModuleEditor` qui :
+  - fetch en parallèle `/wtm/v1/menus?per_page=100&status=any` et
+    `/wtm/v1/wp-menus` (cache module-level pour la session) ;
+  - affiche un `<select>` avec deux `<optgroup>` (WTM + WP natifs) ;
+  - masque le champ "Emplacement" pour les menus WP (qui n'en ont pas
+    besoin — le `wp_nav_menu()` est appelé directement avec le term).
+
+- `Preview_Controller.php` — la prévisualisation du module `menu`
+  dans l'iframe affiche désormais `[Menu WP #N]` ou `[Menu WTM #N]`
+  selon la source, pour distinguer visuellement les deux types.
+
+### Files Modified
+
+- `woo-total-menu.php` — bump `WTM_VERSION` à `1.7.1`.
+- `package.json` — bump version à `1.7.1`.
+- `src/Bootstrap.php` — enregistrement du service `rest_wp_menus`.
+- `src/Frontend/Header_Footer_Renderer.php` — `render_module_menu()`
+  + nouvelle méthode privée `render_wp_nav_menu()`.
+- `src/Frontend/Preview_Controller.php` — label de prévisualisation
+  différencié.
+- `builder/components/ModuleProperties.js` — nouveau composant
+  `MenuModuleEditor` + hook `useAvailableMenus` + cache
+  `_availableMenusCache`.
+- `builder/style.css` — styles pour `.wtm-field-hint` et les
+  `<optgroup>` du dropdown.
+- `build/index.js` + `build/style-index.css` — rebuild webpack.
+
+### Files Added
+
+- `src/Api/WP_Menus_Controller.php` — nouveau contrôleur REST.
+- `versions/v1.7.1.md` — présente release note.
+
+### Backward Compatibility
+
+- 100 % rétro-compatible : un `wtm_menu` existant avec un header/footer
+  config qui utilise un module `menu` sans `menu_source` continue de
+  fonctionner comme avant (défaut = `"wtm"`).
+- Aucune migration DB nécessaire.
+
 ## [1.7.0] - 2026-06-26
 
 ### Added
