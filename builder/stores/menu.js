@@ -428,15 +428,24 @@ const actions = {
                                                 location: menu.location,
                                                 config: menu.config,
                                         };
+
+                                        // v1.4.0 — pull the current header/footer layout from the
+                                        // layout store so unsaved edits in the Header/Footer Builder
+                                        // are persisted along with the menu.
+                                        const layoutHeader = registry.select('wtm/layout').getLayout('header');
+                                        const layoutFooter = registry.select('wtm/layout').getLayout('footer');
+                                        const headerConfig = layoutHeader || menu.header_config;
+                                        const footerConfig = layoutFooter || menu.footer_config;
+
                                         // Only include header_config / footer_config when they
                                         // actually hold a value. The REST controller's endpoint
                                         // args declare them as `object|string` and reject `null`,
                                         // so sending null breaks the whole PUT request (HTTP 400).
-                                        if (menu.header_config) {
-                                                payload.header_config = menu.header_config;
+                                        if (headerConfig) {
+                                                payload.header_config = headerConfig;
                                         }
-                                        if (menu.footer_config) {
-                                                payload.footer_config = menu.footer_config;
+                                        if (footerConfig) {
+                                                payload.footer_config = footerConfig;
                                         }
                                         savedMenu = await apiFetch({
                                                 path: `/wtm/v1/menus/${menu.id}`,
@@ -458,6 +467,10 @@ const actions = {
                                 dispatch.setMenu(savedMenu);
                                 dispatch.setDirty(false);
                                 dispatch.clearHistory();
+                                // v1.4.0 — clear the layout store's undo history too.
+                                if (registry.select('wtm/layout')) {
+                                        registry.dispatch('wtm/layout').clearHistory();
+                                }
                         } catch (err) {
                                 dispatch.setError(err.message || __('Erreur lors de la sauvegarde.', 'woo-total-menu'));
                         } finally {

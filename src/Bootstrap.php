@@ -132,6 +132,15 @@ class Bootstrap {
                 $this->services['location_interceptor'] = new \WooTotalMenu\Frontend\Location_Interceptor( $this->services['menu_renderer'] );
                 $this->services['shortcode']        = new \WooTotalMenu\Frontend\Shortcode( $this->services['menu_renderer'] );
 
+                // v1.4.0 — Header/Footer builder (spec §3.6, §3.7, §4.6.5, §5.7, §5.8).
+                //   - Header_Footer_Renderer: walks layout config (rows → columns →
+                //     modules) → HTML. Reuses Menu_Renderer for `menu` modules.
+                //   - Header_Footer_Injector: hooks into wp_body_open / wp_footer to
+                //     inject the rendered HTML. Enabled by setting
+                //     wtm_global_settings → header_footer → enabled = true.
+                $this->services['hf_renderer'] = new \WooTotalMenu\Frontend\Header_Footer_Renderer( $this->services['menu_renderer'] );
+                $this->services['hf_injector'] = new \WooTotalMenu\Frontend\Header_Footer_Injector( $this->services['hf_renderer'] );
+
                 // Admin (only in wp-admin context).
                 if ( is_admin() ) {
                         $this->services['admin_menu']  = new \WooTotalMenu\Admin\Admin_Menu();
@@ -290,6 +299,14 @@ class Bootstrap {
                         'permissions' => array(
                                 'admin_default' => 'administrator',
                                 'editor_default' => 'editor',
+                        ),
+                        // v1.4.0 — Header/Footer builder settings (spec §3.6, §3.7).
+                        'header_footer' => array(
+                                'enabled'           => false,
+                                'header_menu_id'    => 0,
+                                'footer_menu_id'    => 0,
+                                'hide_theme_header' => false,
+                                'hide_theme_footer' => false,
                         ),
                         'version' => WTM_VERSION,
                         'db_version' => WTM_DB_VERSION,

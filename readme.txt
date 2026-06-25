@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,25 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.4.0 =
+* New: **Header & Footer Builder visuel** (spec §3.6, §3.7, §4.6.5) — nouveau mode "Header" et "Footer" dans le Builder React accessible via 3 tabs Menu / Header / Footer dans l'en-tête. Layout 3-colonnes mode-aware : ModulePalette (gauche) + LayoutCanvas (centre) + ModuleProperties (droite) en mode header/footer, layout classique TreePanel + PreviewPanel + PropertiesPanel en mode menu. Grille visuelle rows → columns → modules avec resize des colonnes (largeur 1-12), drag-and-drop HTML5 des modules, déplacement des modules entre colonnes.
+* New: **9 types de modules** disponibles dans le Builder Header/Footer — `logo` (image + lien accueil), `menu` (rend un menu wtm_menu existant), `search` (barre de recherche avec live suggestions), `cart` (mini-panier WooCommerce avec drawer AJAX), `button` (CTA), `html` (HTML libre), `social` (icônes réseaux sociaux), `newsletter` (formulaire email AJAX), `text` (texte / copyright avec shortcode `[year]`).
+* New: **2 nouvelles classes PHP frontend** — `Header_Footer_Renderer` (~838 lignes, walker PHP pur rows→columns→modules qui produit du HTML sémantique `<header>`/`<footer>`, réutilise les renderers widgets v1.3 pour search/cart/social/newsletter) et `Header_Footer_Injector` (~288 lignes, hooks `wp_body_open` priority 10 + `wp_footer` priority 20 pour injecter automatiquement le header et le footer globaux sur toutes les pages).
+* New: **Settings `header_footer`** (spec §9.5.2) — section "Header & Footer" dans Réglages → Woo Total Menu avec 5 champs : `enabled` (master toggle, défaut false opt-in), `header_menu_id`, `footer_menu_id`, `hide_theme_header`, `hide_theme_footer`. Masquage CSS optionnel du header/footer natif du theme.
+* New: **REST API étendue** — `GET /wtm/v1/menus/{id}` retourne désormais `header_config` et `footer_config` décodés. `POST /wtm/v1/menus/{id}` accepte `header_config` et `footer_config` validés via `Schema_Validator::validate_layout()`. 2 meta post `_wtm_header_config` et `_wtm_footer_config` enregistrés via `register_meta()` et versionnés dans les révisions WordPress.
+* New: **`Schema_Validator::validate_layout()`** — nouvelle méthode statique qui valide la structure complète d'un layout header/footer (version, rows, columns, modules) avec messages d'erreur précis et chemin (ex: `rows[0].columns[1].modules[2] doit avoir un champ "type" dans: logo, menu, search, …`). `MODULE_TYPES` = 9 types valides.
+* New: **Layout store Redux dédié** (`builder/stores/layout.js`, ~640 lignes) — store `wtm/layout` avec états séparés `state.header` et `state.footer`. 14 actions (loadFromMenu, addRow, updateRow, removeRow, moveRow, addColumn, updateColumn, removeColumn, addModule, updateModule, removeModule, moveModule, selectElement, clearSelection) + 5 sélecteurs (getLayout, getSelectedElementId, getSelectedElementType, isDirty, getHeaderConfig, getFooterConfig).
+* New: **5 hooks/filters pour développeurs** — `wtm_header_inject_hook` (filter, override du hook d'injection header ex: `storefront_header`), `wtm_footer_inject_hook` (filter), `wtm_before_header` (action), `wtm_before_footer` (action), `wtm_layout_module_html` (filter).
+* New: **`Assets_Loader` étendu** — nouvelle méthode `is_header_footer_active()` qui force l'enqueue des assets frontend même si aucun menu n'a encore été rendu (car `wp_body_open` / `wp_footer` se déclenchent après `wp_enqueue_scripts`).
+* New: **Preview iframe étendu** — `Preview_Controller` gère désormais les modes header et footer avec `renderModule()`, `renderColumn()`, `renderHeader()` et `renderFooter()` qui produisent un aperçu compact de chaque module type.
+* New: ~361 lignes CSS frontend pour les styles `.wtm-header` / `.wtm-footer` (layout grid 12 cols via flex, sticky header, responsive 768px). ~546 lignes CSS Builder pour le layout 3-col mode-aware, ModulePalette, LayoutCanvas et ModuleProperties.
+* Fix: `Header_Footer_Renderer::render_module_search()` n'ajoutait pas les attributs `data-wtm-live-search` et `data-min-chars` sur l'input quand `live_suggestions: true` — la recherche live ne fonctionnait pas dans les headers/footers. Fix : ajout conditionnel des attributs + classe `wtm-search--live` + attribut `data-wtm-suggestions` sur la div suggestions.
+* Fix: `Header_Footer_Renderer::render_module_newsletter()` ne générait pas les attributs attendus par `initNewsletter()` du JS frontend (`data-provider`, `data-list-id`, `data-wtm-newsletter-message`, `<script data-wtm-newsletter-config>`). Fix : alignement complet du rendu sur le widget v1.3.
+* Update: `Bootstrap::init_services()` instancie désormais `hf_renderer` et `hf_injector` sur chaque requête (pas seulement `is_admin`).
+* Update: `Assets_Loader::__construct()` écoute les actions `wtm_before_header` et `wtm_before_footer` pour marquer les assets comme nécessaires.
+* Update: Builder `App.js` est mode-aware et propage le dirty state du store `wtm/layout` vers le store `wtm` (menu) pour activer le bouton Save. Builder `Header.js` affiche 3 tabs Menu / Header / Footer.
+* Update: Bump version 1.3.0 → 1.4.0 (woo-total-menu.php, package.json, readme.txt)
 
 = 1.3.0 =
 * New: 4 nouveaux widgets WooCommerce avancés — `recent_posts` (articles WordPress en grille), `social_icons` (icônes réseaux sociaux avec glyphes SVG inline Facebook/Twitter/Instagram/LinkedIn/YouTube/Pinterest/GitHub), `newsletter` (formulaire d'abonnement email avec AJAX + nonce + providers internal/mailchimp/none), `filters` (filtres WooCommerce layered nav : catégories/prix/attributs).

@@ -1648,3 +1648,549 @@
 .wtm-properties__social-add:hover {
 	background: rgba(108, 92, 231, 0.06);
 }
+
+/* ==========================================================================
+   v1.4.0 — Header/Footer Builder (LayoutBuilder, ModulePalette, LayoutCanvas,
+   ModuleProperties, mode switcher)
+   ========================================================================== */
+
+/* === Mode switcher (Menu | Header | Footer) in the top toolbar === */
+.wtm-builder__mode-switcher {
+	display: inline-flex;
+	background: #F1F5F9;
+	border-radius: 6px;
+	padding: 2px;
+	gap: 2px;
+	margin: 0 8px;
+}
+
+.wtm-builder__mode-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 12px;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	color: #64748B;
+	font-size: 0.85rem;
+	font-weight: 500;
+	font-family: inherit;
+	transition: background 0.15s, color 0.15s;
+}
+
+.wtm-builder__mode-tab .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.wtm-builder__mode-tab:hover {
+	color: #1E293B;
+}
+
+.wtm-builder__mode-tab.is-active {
+	background: #FFFFFF;
+	color: #6C5CE7;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.wtm-builder__mode-label {
+	white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+	.wtm-builder__mode-label {
+		display: none;
+	}
+}
+
+/* === LayoutBuilder grid (palette | canvas | properties) === */
+.wtm-layout-builder {
+	display: grid;
+	grid-template-columns: 220px 1fr 320px;
+	gap: 0;
+	height: calc(100vh - 60px);
+	overflow: hidden;
+}
+
+.wtm-layout-builder--empty,
+.wtm-layout-builder--loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 20px;
+	color: #6B7280;
+	gap: 12px;
+}
+
+.wtm-layout-builder--loading .dashicons {
+	font-size: 28px;
+	color: #6C5CE7;
+}
+
+.wtm-builder__col--palette,
+.wtm-builder__col--canvas,
+.wtm-builder__col--module-properties {
+	overflow-y: auto;
+	height: 100%;
+}
+
+.wtm-builder__col--palette {
+	border-right: 1px solid #E2E8F0;
+	background: #FAFBFC;
+}
+
+.wtm-builder__col--module-properties {
+	border-left: 1px solid #E2E8F0;
+	background: #FAFBFC;
+}
+
+/* === ModulePalette === */
+.wtm-builder__palette {
+	padding: 16px 12px;
+}
+
+.wtm-builder__palette-header h2 {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 4px 0;
+	font-size: 0.95rem;
+	color: #1E293B;
+}
+
+.wtm-builder__palette-header .dashicons {
+	color: #6C5CE7;
+}
+
+.wtm-builder__palette-help {
+	font-size: 0.75rem;
+	color: #64748B;
+	margin: 0 0 14px 0;
+	line-height: 1.4;
+}
+
+.wtm-builder__palette-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.wtm-builder__palette-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	background: #FFFFFF;
+	border: 1px solid #E2E8F0;
+	border-radius: 6px;
+	cursor: grab;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wtm-builder__palette-item:hover {
+	border-color: #6C5CE7;
+	box-shadow: 0 2px 6px rgba(108, 92, 231, 0.10);
+}
+
+.wtm-builder__palette-item:active {
+	cursor: grabbing;
+}
+
+.wtm-builder__palette-icon {
+	font-size: 20px;
+	width: 20px;
+	height: 20px;
+	color: #6C5CE7;
+	flex-shrink: 0;
+}
+
+.wtm-builder__palette-label {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
+}
+
+.wtm-builder__palette-name {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #1E293B;
+}
+
+.wtm-builder__palette-desc {
+	font-size: 0.7rem;
+	color: #64748B;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* === LayoutCanvas === */
+.wtm-canvas {
+	padding: 16px 20px;
+	background: #FFFFFF;
+	min-height: 100%;
+}
+
+.wtm-canvas__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+}
+
+.wtm-canvas__header h2 {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	font-size: 1rem;
+	color: #1E293B;
+}
+
+.wtm-canvas__header .dashicons {
+	color: #6C5CE7;
+}
+
+.wtm-canvas__add-row {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.wtm-canvas__add-row .dashicons {
+	font-size: 14px;
+}
+
+.wtm-canvas__empty,
+.wtm-canvas--empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 20px;
+	color: #6B7280;
+	gap: 8px;
+	text-align: center;
+}
+
+.wtm-canvas__empty .dashicons,
+.wtm-canvas--empty .dashicons {
+	font-size: 40px;
+	color: #CBD5E1;
+}
+
+.wtm-canvas__rows {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.wtm-canvas__row {
+	border: 2px solid transparent;
+	border-radius: 6px;
+	background: #FAFBFC;
+	transition: border-color 0.15s;
+}
+
+.wtm-canvas__row.is-selected {
+	border-color: #6C5CE7;
+}
+
+.wtm-canvas__row-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 8px;
+	background: #F1F5F9;
+	border-radius: 4px 4px 0 0;
+	font-size: 0.75rem;
+	color: #64748B;
+}
+
+.wtm-canvas__row-handle {
+	background: transparent;
+	border: none;
+	cursor: grab;
+	color: #94A3B8;
+	padding: 4px;
+	display: inline-flex;
+}
+
+.wtm-canvas__row-handle:active {
+	cursor: grabbing;
+}
+
+.wtm-canvas__row-label {
+	flex: 1;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
+}
+
+.wtm-canvas__row-delete,
+.wtm-canvas__col-delete,
+.wtm-canvas__module-delete {
+	background: transparent;
+	border: none;
+	color: #FF7675;
+	cursor: pointer;
+	padding: 4px 6px;
+	border-radius: 4px;
+	display: inline-flex;
+	align-items: center;
+}
+
+.wtm-canvas__row-delete:hover,
+.wtm-canvas__col-delete:hover,
+.wtm-canvas__module-delete:hover {
+	background: rgba(255, 118, 117, 0.10);
+}
+
+.wtm-canvas__cols {
+	display: flex;
+	gap: 8px;
+	padding: 8px;
+	flex-wrap: wrap;
+	align-items: stretch;
+}
+
+.wtm-canvas__col {
+	flex: 0 0 33.3333%;
+	min-width: 120px;
+	border: 2px dashed transparent;
+	border-radius: 6px;
+	padding: 8px;
+	background: #FFFFFF;
+	border-color: #E2E8F0;
+	transition: border-color 0.15s, background 0.15s;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.wtm-canvas__col.is-selected {
+	border-color: #6C5CE7;
+	border-style: solid;
+}
+
+.wtm-canvas__col.drag-over {
+	background: rgba(108, 92, 231, 0.06);
+	border-color: #6C5CE7;
+}
+
+.wtm-canvas__col-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 0.7rem;
+	color: #64748B;
+}
+
+.wtm-canvas__col-width {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.wtm-canvas__col-width input {
+	width: 38px;
+	padding: 2px 4px;
+	font-size: 0.75rem;
+	border: 1px solid #E2E8F0;
+	border-radius: 3px;
+}
+
+.wtm-canvas__col-add {
+	align-self: flex-start;
+	font-size: 0.7rem;
+	color: #6C5CE7;
+	text-decoration: none;
+}
+
+.wtm-canvas__modules {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-height: 40px;
+	flex: 1;
+}
+
+.wtm-canvas__module {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	background: #F9FAFB;
+	border: 1px solid #E5E7EB;
+	border-radius: 4px;
+	cursor: grab;
+	transition: border-color 0.15s, background 0.15s;
+}
+
+.wtm-canvas__module:hover {
+	border-color: #6C5CE7;
+}
+
+.wtm-canvas__module.is-selected {
+	border-color: #6C5CE7;
+	background: rgba(108, 92, 231, 0.06);
+}
+
+.wtm-canvas__module:active {
+	cursor: grabbing;
+}
+
+.wtm-canvas__module-icon {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	color: #6C5CE7;
+	flex-shrink: 0;
+}
+
+.wtm-canvas__module-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	flex: 1;
+	min-width: 0;
+}
+
+.wtm-canvas__module-type {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #1E293B;
+}
+
+.wtm-canvas__module-summary {
+	font-size: 0.7rem;
+	color: #64748B;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.wtm-canvas__col-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px 8px;
+	font-size: 0.75rem;
+	color: #94A3B8;
+	font-style: italic;
+	border: 1px dashed #CBD5E1;
+	border-radius: 4px;
+	min-height: 32px;
+	text-align: center;
+}
+
+/* === ModuleProperties — reuses .wtm-properties__row from PropertiesPanel === */
+.wtm-builder__properties {
+	padding: 16px 14px;
+}
+
+.wtm-builder__properties-header h2 {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 12px 0;
+	font-size: 0.95rem;
+	color: #1E293B;
+	border-bottom: 1px solid #E2E8F0;
+	padding-bottom: 10px;
+}
+
+.wtm-builder__properties-header code {
+	background: #F1F5F9;
+	padding: 1px 6px;
+	border-radius: 3px;
+	font-size: 0.85rem;
+	color: #6C5CE7;
+}
+
+.wtm-builder__properties--empty,
+.wtm-builder__properties-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 20px;
+	color: #94A3B8;
+	gap: 8px;
+	text-align: center;
+}
+
+.wtm-builder__properties-empty .dashicons {
+	font-size: 32px;
+	color: #CBD5E1;
+}
+
+.wtm-properties__hint {
+	display: block;
+	font-size: 0.7rem;
+	color: #94A3B8;
+	margin-top: 2px;
+	font-style: italic;
+}
+
+.wtm-field-separator {
+	border: none;
+	border-top: 1px solid #E2E8F0;
+	margin: 12px 0;
+}
+
+.wtm-field-empty {
+	color: #94A3B8;
+	font-style: italic;
+	font-size: 0.8rem;
+	text-align: center;
+	padding: 12px;
+}
+
+/* FieldRow uses .wtm-properties__row — extend with input styles */
+.wtm-properties__row .wtm-field-input,
+.wtm-properties__row input[type="text"],
+.wtm-properties__row input[type="url"],
+.wtm-properties__row input[type="number"],
+.wtm-properties__row input[type="email"],
+.wtm-properties__row select,
+.wtm-properties__row textarea {
+	width: 100%;
+	padding: 6px 8px;
+	border: 1px solid #E2E8F0;
+	border-radius: 4px;
+	font-size: 0.85rem;
+	font-family: inherit;
+	background: #FFFFFF;
+}
+
+.wtm-properties__row input:focus,
+.wtm-properties__row select:focus,
+.wtm-properties__row textarea:focus {
+	outline: none;
+	border-color: #6C5CE7;
+	box-shadow: 0 0 0 1px rgba(108, 92, 231, 0.20);
+}
+
+.wtm-properties__row textarea {
+	font-family: monospace;
+	font-size: 0.8rem;
+	resize: vertical;
+}
+
+.wtm-properties__row label {
+	display: block;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #475569;
+	margin-bottom: 4px;
+}
+
+.wtm-properties__row {
+	margin-bottom: 12px;
+}

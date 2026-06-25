@@ -4,11 +4,36 @@
  * These reduce bundle size significantly by replacing repeated verbose
  * JSX patterns with a single function call.
  *
+ * v1.4.0 — added default export `FieldRow` (generic wrapper with label + hint)
+ * for use in ModuleProperties.js.
+ *
  * @package WooTotalMenu
  * @since 1.3.0
  */
 
 import { __ } from '@wordpress/i18n';
+
+/**
+ * Generic FieldRow — wraps a label + children + optional hint.
+ *
+ * Use this when you need a custom control (e.g. mixed inputs) inside a row.
+ * For single-input rows, prefer the named exports below (TextRow, etc.).
+ *
+ * @param {Object}   props       Component props.
+ * @param {string}   props.label Row label.
+ * @param {string}   [props.hint] Optional hint shown below the field.
+ * @param {JSX.Element} props.children The control(s).
+ * @return {JSX.Element} Row markup.
+ */
+export default function FieldRow({ label, hint, children }) {
+        return (
+                <div className="wtm-properties__row">
+                        <label>{label}</label>
+                        {children}
+                        {hint && <em className="wtm-properties__hint">{hint}</em>}
+                </div>
+        );
+}
 
 export function TextRow({ label, value, onChange, placeholder }) {
         return (

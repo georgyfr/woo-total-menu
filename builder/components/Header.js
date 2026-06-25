@@ -10,6 +10,10 @@
  * - "History" button — opens the History modal showing WordPress revisions
  *   of the current menu (spec §6.6, §7.6). Disabled for unsaved new menus.
  *
+ * v1.4.0 additions:
+ * - Mode switcher: Menu | Header | Footer (spec §4.6.5, §9.5.3).
+ *   Switches the central column between TreePanel+Preview and LayoutBuilder.
+ *
  * @package WooTotalMenu
  * @since 1.1.0
  */
@@ -27,13 +31,20 @@ const DEVICE_OPTIONS = [
         { value: 'mobile', label: __('Mobile', 'woo-total-menu'), icon: 'smartphone' },
 ];
 
+const MODE_OPTIONS = [
+        { value: 'menu', label: __('Menu', 'woo-total-menu'), icon: 'menu' },
+        { value: 'header', label: __('Header', 'woo-total-menu'), icon: 'align-center' },
+        { value: 'footer', label: __('Footer', 'woo-total-menu'), icon: 'align-wide' },
+];
+
 export default function Header({ title, menuType, isDirty, isLoading }) {
         const { saveMenu, undo, redo, loadRevisions } = useDispatch(WTM_STORE_NAME);
         const device = useSelect((select) => select(UI_STORE_NAME).getDevice(), []);
+        const activeMode = useSelect((select) => select(UI_STORE_NAME).getActiveMode(), []);
         const canUndo = useSelect((select) => select(WTM_STORE_NAME).canUndo(), []);
         const canRedo = useSelect((select) => select(WTM_STORE_NAME).canRedo(), []);
         const menu = useSelect((select) => select(WTM_STORE_NAME).getMenu(), []);
-        const { setDevice, setAnnouncement, openHistory } = useDispatch(UI_STORE_NAME);
+        const { setDevice, setAnnouncement, openHistory, setMode } = useDispatch(UI_STORE_NAME);
 
         // === Global keyboard shortcuts (spec §9.9) ===
         useEffect(() => {
@@ -128,6 +139,24 @@ export default function Header({ title, menuType, isDirty, isLoading }) {
                                         >
                                                 <span className="dashicons dashicons-backup"></span>
                                         </button>
+                                </div>
+
+                                {/* v1.4.0 — Mode switcher: Menu | Header | Footer */}
+                                <div className="wtm-builder__mode-switcher" role="tablist" aria-label={__('Mode d\'édition', 'woo-total-menu')}>
+                                        {MODE_OPTIONS.map((opt) => (
+                                                <button
+                                                        key={opt.value}
+                                                        type="button"
+                                                        role="tab"
+                                                        aria-selected={activeMode === opt.value}
+                                                        className={`wtm-builder__mode-tab ${activeMode === opt.value ? 'is-active' : ''}`}
+                                                        onClick={() => setMode(opt.value)}
+                                                        title={opt.label}
+                                                >
+                                                        <span className={`dashicons dashicons-${opt.icon}`}></span>
+                                                        <span className="wtm-builder__mode-label">{opt.label}</span>
+                                                </button>
+                                        ))}
                                 </div>
 
                                 <div className="wtm-builder__devices">

@@ -44,6 +44,13 @@ class Assets_Loader {
         private $has_rendered_menu = false;
 
         /**
+         * Whether a header/footer layout is enabled (forces asset loading).
+         *
+         * @var bool|null Cached lookup result.
+         */
+        private $hf_enabled = null;
+
+        /**
          * Constructor.
          *
          * @param Dynamic_CSS $dynamic_css Dynamic CSS generator.
@@ -54,8 +61,25 @@ class Assets_Loader {
                 // Listen for menus being rendered (via shortcode or location interceptor).
                 add_action( 'wtm_rendered_location', array( $this, 'mark_rendered' ), 10, 2 );
 
+                // v1.4.0 — also listen for header/footer module events (the `menu`
+                // module inside a header/footer fires wtm_rendered_location too, but
+                // we add an explicit hook for non-menu modules so assets load).
+                add_action( 'wtm_before_header', array( $this, 'mark_hf_rendered' ) );
+                add_action( 'wtm_before_footer', array( $this, 'mark_hf_rendered' ) );
+
                 // Enqueue assets — late, after we know whether a menu was rendered.
                 add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue' ), 100 );
+        }
+
+        /**
+         * Mark that a header/footer layout is being rendered.
+         *
+         * Hooked into wtm_before_header / wtm_before_footer.
+         *
+         * @return void
+         */
+        public function mark_hf_rendered() {
+                $this->has_rendered_menu = true;
         }
 
         /**
@@ -85,7 +109,12 @@ class Assets_Loader {
                  */
                 $force = (bool) apply_filters( 'wtm_force_enqueue_assets', false );
 
-                if ( ! $this->has_rendered_menu && ! $force ) {
+                // v1.4.0 — also load when the Header/Footer injector is enabled. The
+                // actual injection happens on wp_body_open / wp_footer, which fire
+                // AFTER wp_enqueue_scripts, so we peek at the settings here.
+                $hf_active = $this->is_header_footer_active();
+
+                if ( ! $this->has_rendered_menu && ! $force && ! $hf_active ) {
                         return;
                 }
 
@@ -151,5 +180,30 @@ class Assets_Loader {
                                 'wooCartFragments' => class_exists( 'WooCommerce' ) ? 'yes' : 'no',
                         )
                 );
+        }
+
+        /**
+         * Check whether the Header/Footer injector is enabled and a header or
+         * footer menu is configured.
+         *
+         * Used to decide whether to enqueue frontend assets even before the
+         * injector actually fires (wp_body_open / wp_footer happen after
+         * wp_enqueue_scripts).
+         *
+         * @since 1.4.0
+         *
+         * @return bool
+         */
+        private function is_header_footer_active() {
+                if ( null !== $this->hf_enabled ) {
+                        return $this->hf_enabled;
+                }
+                $option = get_option( WTM_OPTION_SETTINGS );
+                $hf     = is_array( $option ) ? ( $option['header_footer'] ?? array() ) : array();
+                $enabled         = ! empty( $hf['enabled'] );
+                $header_menu_id  = ! empty( $hf['header_menu_id'] );
+                $footer_menu_id  = ! empty( $hf['footer_menu_id'] );
+                $this->hf_enabled = $enabled && ( $header_menu_id || $footer_menu_id );
+                return $this->hf_enabled;
         }
 }
