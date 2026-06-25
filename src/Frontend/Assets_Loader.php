@@ -152,6 +152,12 @@ class Assets_Loader {
                 $breakpoint  = (int) ( $responsive['mobile_breakpoint'] ?? 768 );
                 $mobile_bhvr = $responsive['mobile_behavior'] ?? 'offcanvas';
 
+                // v1.7.0 — Analytics config (privacy-friendly).
+                $analytics = is_array( $settings ) ? ( $settings['analytics'] ?? array() ) : array();
+                $analytics_enabled = ! empty( $analytics['enabled'] );
+                $track_logged      = ! empty( $analytics['track_logged'] );
+                $should_track      = $analytics_enabled && ( ! is_user_logged_in() || $track_logged );
+
                 wp_localize_script(
                         'wtm-frontend',
                         'wtmFrontend',
@@ -178,6 +184,12 @@ class Assets_Loader {
                                 'restNonce'        => wp_create_nonce( 'wp_rest' ),
                                 'newsletterNonce'  => wp_create_nonce( 'wtm_newsletter' ),
                                 'wooCartFragments' => class_exists( 'WooCommerce' ) ? 'yes' : 'no',
+                                // v1.7.0 — Analytics.
+                                'analytics'        => array(
+                                        'enabled'    => $should_track,
+                                        'trackUrl'   => esc_url_raw( rest_url( WTM_REST_NAMESPACE . '/analytics/track' ) ),
+                                        'restNonce'  => wp_create_nonce( 'wp_rest' ),
+                                ),
                         )
                 );
         }

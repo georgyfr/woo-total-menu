@@ -157,6 +157,19 @@ class Bootstrap {
                 //     personnalisés créés via le plugin (préfixe `wtm_`).
                 $this->services['rest_roles'] = new \WooTotalMenu\Api\Roles_Controller();
 
+                // v1.7.0 — Conditions Controller (4 routes REST /wtm/v1/menus/{id}/conditions…).
+                //   - GET / PUT / DELETE pour lire, remplacer ou vider les conditions
+                //     de visibilité attachées à un menu.
+                //   - POST /conditions/test : évalue les conditions fournies contre la
+                //     requête courante (preview dans le Builder).
+                $this->services['rest_conditions'] = new \WooTotalMenu\Api\Conditions_Controller();
+
+                // v1.7.0 — Analytics Controller (2 routes REST /wtm/v1/analytics…).
+                //   - POST /analytics/track : endpoint public (nonce-gated) pour
+                //     enregistrer un événement view/click/hover.
+                //   - GET  /analytics/stats  : agrégats journaliers pour le dashboard.
+                $this->services['rest_analytics'] = new \WooTotalMenu\Api\Analytics_Controller();
+
                 // v1.6.0 — Gutenberg blocks (3 blocs server-render : menu, header, footer).
                 //   - register_block_type() appelé sur `init` par Gutenberg_Blocks.
                 //   - Editor JS minimaliste (placeholder + sidebar controls) — le rendu

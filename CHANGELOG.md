@@ -5,6 +5,144 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-06-26
+
+### Added
+
+- **Menus conditionnels** — `Condition_Evaluator`
+  (`src/Core/Condition_Evaluator.php`, ~330 lignes) :
+  - Évaluateur runtime de règles de visibilité attachées à un `wtm_menu`.
+  - 10 types de règles : `page_type`, `post_id`, `post_type`, `taxonomy`,
+    `user_state`, `user_role`, `device`, `date_range`, `url_param`, `language`.
+  - Logique de combinaison `all` (ET) ou `any` (OU) avec court-circuit.
+  - Cache par requête (résultats mémorisés par menu_id).
+  - Validation statique via `Condition_Evaluator::validate()` (utilisable
+    côté REST avant sauvegarde).
+  - Hooks : `wtm_condition_result` (filter), `wtm_condition_rule_{type}`
+    (filter pour types custom).
+
+- **Analytics simple** — `Analytics` (`src/Core/Analytics.php`,
+  ~250 lignes) :
+  - Stockage privacy-friendly (pas d'IP, pas d'user ID, pas de cookie).
+  - Compteurs agrégés par jour stockés dans l'option `wtm_analytics_{YYYY-MM-DD}`.
+  - 3 types d'événements : `view`, `click`, `hover`.
+  - Filtrage par utilisateur connecté (`track_logged` setting).
+  - Méthode `cleanup($days)` pour purger les données anciennes (90 jours par défaut).
+  - Hook : `wtm_analytics_recorded` (action post-enregistrement).
+
+- **API REST — `Conditions_Controller`**
+  (`src/Api/Conditions_Controller.php`, ~260 lignes) :
+  - 4 routes REST sous `/wtm/v1/menus/{id}/conditions` :
+    - `GET /conditions` — lecture des conditions courantes.
+    - `PUT /conditions` — remplacement (validation + sanitization).
+    - `DELETE /conditions` — effacement.
+    - `POST /conditions/test` — évaluation contre la requête courante
+      (retourne un rapport par règle + résultat global).
+
+- **API REST — `Analytics_Controller`**
+  (`src/Api/Analytics_Controller.php`, ~190 lignes) :
+  - 2 routes REST sous `/wtm/v1/analytics` :
+    - `POST /track` — endpoint public (nonce-gated) pour soumettre un événement.
+    - `GET /stats` — endpoint admin-only avec filtres `start`, `end`,
+      `menu_id`, `event`, `group_by` (`day` | `menu` | `event`).
+
+- **Panneau Builder "Conditions"** (`builder/components/ConditionsPanel.js`,
+  ~280 lignes) :
+  - Nouvelle modale accessible depuis la barre d'outils supérieure du Builder
+    (icône `dashicons-shield-alt`).
+  - Éditeur de règles avec menus déroulants pour les enums (`page_type`,
+    `user_state`, `device`) et inputs libres pour les autres types.
+  - Sélecteur de logique ET/OU (radio buttons).
+  - Bouton **Tester sur la page courante** qui appelle `/conditions/test`
+    et affiche le rapport détaillé par règle.
+  - Bouton **Effacer toutes les conditions** pour réinitialiser.
+  - État `isConditionsOpen` dans le store `wtm/ui` (Redux) avec actions
+    `openConditions()` / `closeConditions()`.
+
+- **Page admin Analytics** (`src/Admin/Pages/Analytics_Page.php`, ~210 lignes) :
+  - Nouvelle page sous `/wp-admin/admin.php?page=wtm-analytics`.
+  - 3 cartes KPI : vues totales, clics totaux, CTR.
+  - Chart HTML/CSS pur (pas de JS, pas de dépendance) des 7/14/30/90
+    derniers jours avec barres view + click côte à côte.
+  - Tableau "par menu" avec vues, clics et CTR.
+  - Filtre par période + par menu.
+  - Bloc "Confidentialité" expliquant l'approche RGPD/CCPA.
+
+- **Tracking JS frontend** (`assets/front/wtm-frontend.js`, +85 lignes) :
+  - Nouveau module `initAnalytics()` exécuté au `DOMContentLoaded`.
+  - Événement `view` : déclenché une fois par menu portant
+    `data-wtm-menu-id` au chargement de la page.
+  - Événement `click` : déclenché lors du clic sur un élément portant
+    `data-wtm-item-id`, via `navigator.sendBeacon` (survit à la navigation).
+  - Fallback `fetch()` avec `keepalive: true` pour les navigateurs sans
+    `sendBeacon`.
+  - Configuration passée via `wtmFrontend.analytics` (URL + nonce).
+
+- **Méta `_wtm_conditions`** :
+  - Enregistrée via `register_post_meta()` avec `revisions_enabled = true`.
+  - Sanitization custom via `Meta_Boxes::sanitize_conditions()` qui
+    délègue à `Condition_Evaluator::validate()`.
+  - Copiée automatiquement dans les révisions WordPress.
+  - Restaurée lors d'un restore de révision.
+  - Copiée lors d'un duplicate de menu (action `duplicate_menu`).
+
+- **Attributs data sur le frontend** :
+  - `data-wtm-menu-id="{ID}"` ajouté au `<nav>` du menu (via `Menu_Renderer`).
+  - `data-wtm-item-id="{ID}"` ajouté aux `<a>` des items `link`
+    (via la nouvelle méthode `Menu_Renderer::item_id_attr()`).
+  - L'ID d'item est calculé comme un hash numérique stable de `label|url`
+    si l'item n'a pas d'ID explicite.
+
+- **Hooks développeur** :
+  - `wtm_condition_result` (filter) — surcharge du résultat d'évaluation.
+  - `wtm_condition_rule_{type}` (filter) — évaluation de types custom.
+  - `wtm_analytics_recorded` (action) — post-enregistrement d'événement.
+
+### Changed
+
+- **`Settings.php` — onglet Analytics** : les checkboxes `enabled` et
+  `track_logged` ne sont plus `disabled`. Le message "Module disponible à
+  partir de la v1.7.1" est remplacé par une description fonctionnelle.
+  Un bouton "Voir le tableau de bord analytics" a été ajouté.
+
+- **`Menu_Controller::format_item()`** : expose maintenant `conditions`
+  dans la réponse JSON de chaque menu (décodé depuis la méta `_wtm_conditions`).
+
+- **`Menu_Controller::create_menu()` et `update_menu()`** acceptent
+  maintenant un paramètre `conditions` optionnel (validé via
+  `Condition_Evaluator::validate()`).
+
+- **`Location_Interceptor::intercept()`** consulte le `Condition_Evaluator`
+  avant de remplacer un `wp_nav_menu()`. Si les conditions ne matchent pas,
+  le thème retombe sur son walker natif.
+
+- **`Header_Footer_Injector::inject_header()` et `inject_footer()`**
+  consultent le `Condition_Evaluator` avant d'injecter le HTML.
+
+- **`Assets_Loader::maybe_enqueue()`** passe la config analytics au JS
+  frontend via `wp_localize_script('wtmFrontend', 'analytics', ...)`.
+
+- **`Admin_Menu::register_menu()`** enregistre la nouvelle page
+  `wtm-analytics` (capacité `wtm_view_analytics`).
+
+- **`About.php`** : roadmap v1.7.x marquée comme `done`.
+
+- **`Bootstrap.php`** : enregistre `rest_conditions` et `rest_analytics`
+  dans le container de services.
+
+### Removed
+
+- Aucun retrait. La v1.7.0 est une release d'ajout pur.
+
+### Compatibility
+
+- Aucune migration DB nécessaire (la nouvelle méta `_wtm_conditions` est
+  créée à la volée).
+- Les menus existants sans conditions continuent à s'afficher comme avant.
+- Le module Analytics est opt-in (désactivé par défaut).
+- PHP 7.4+ requis (inchangé).
+- WordPress 6.4+ requis (inchangé).
+
 ## [1.6.0] - 2026-06-26
 
 ### Added

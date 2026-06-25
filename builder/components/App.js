@@ -23,6 +23,7 @@ import PropertiesPanel from './PropertiesPanel';
 import HistoryPanel from './HistoryPanel';
 import LayoutBuilder from './LayoutBuilder';
 import { TemplateGallery } from './TemplateGallery';
+import ConditionsPanel from './ConditionsPanel';
 import { WTM_STORE_NAME } from '../stores/menu';
 import { UI_STORE_NAME } from '../stores/ui';
 import { LAYOUT_STORE_NAME } from '../stores/layout';
@@ -107,6 +108,9 @@ export default function App({ initialState }) {
 
                         {/* v1.5.0 — Templates Gallery modal (mounted at the top level). */}
                         <TemplateGallery />
+
+                        {/* v1.7.0 — Conditions modal (mounted at the top level). */}
+                        <ConditionsPanel />
                 </div>
         );
 }

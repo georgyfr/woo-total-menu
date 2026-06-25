@@ -103,7 +103,7 @@ class Menu_Renderer {
                  */
                 $config = apply_filters( 'wtm_menu_config', $config, $menu_id, $location );
 
-                return $this->render( $config, $menu_type, $location, $post );
+                return $this->render( $config, $menu_type, $location, $post, $menu_id );
         }
 
         /**
@@ -113,9 +113,10 @@ class Menu_Renderer {
          * @param string   $menu_type horizontal|vertical|offcanvas|footer.
          * @param string   $location  Location slug.
          * @param \WP_Post $post      Optional post object (for title attr).
+         * @param int      $menu_id   Optional menu post ID (for analytics data-attr).
          * @return string HTML markup.
          */
-        public function render( array $config, $menu_type, $location, $post = null ) {
+        public function render( array $config, $menu_type, $location, $post = null, $menu_id = 0 ) {
                 $items = is_array( $config['items'] ?? null ) ? $config['items'] : array();
                 if ( empty( $items ) ) {
                         return '';
@@ -176,13 +177,17 @@ class Menu_Renderer {
 
                 $nav_id = 'wtm-menu-' . $location;
 
+                // v1.7.0 — Add data-wtm-menu-id for analytics tracking.
+                $menu_id_attr = $menu_id > 0 ? sprintf( ' data-wtm-menu-id="%d"', (int) $menu_id ) : '';
+
                 return sprintf(
-                        '<nav id="%s" class="%s" aria-label="%s" data-wtm-menu data-wtm-type="%s" data-wtm-location="%s">%s</nav>',
+                        '<nav id="%s" class="%s" aria-label="%s" data-wtm-menu data-wtm-type="%s" data-wtm-location="%s"%s>%s</nav>',
                         esc_attr( $nav_id ),
                         esc_attr( implode( ' ', $nav_classes ) ),
                         esc_attr( $aria_label ),
                         esc_attr( $menu_type ),
                         esc_attr( $location ),
+                        $menu_id_attr,
                         $inner
                 );
         }
@@ -261,11 +266,15 @@ class Menu_Renderer {
                 $has_sub = ! empty( $item['children'] );
                 $arrow   = $has_sub ? '<span class="wtm-menu__caret" aria-hidden="true"></span>' : '';
 
+                // v1.7.0 — Stable item ID for analytics click tracking.
+                $item_id_attr = $this->item_id_attr( $item );
+
                 $link_html = sprintf(
-                        '<a href="%s" class="wtm-menu__link" target="%s"%s>%s<span class="wtm-menu__label">%s</span>%s%s</a>',
+                        '<a href="%s" class="wtm-menu__link" target="%s"%s%s>%s<span class="wtm-menu__label">%s</span>%s%s</a>',
                         $url,
                         esc_attr( $target ),
                         $rel,
+                        $item_id_attr,
                         $icon,
                         $label,
                         $badge,
@@ -1384,6 +1393,40 @@ class Menu_Renderer {
                         }
                 }
                 return $classes;
+        }
+
+        /**
+         * v1.7.0 — Build the data-wtm-item-id attribute for analytics.
+         *
+         * Items in the config may declare an `id` (string). If absent, we
+         * synthesize a stable hash from label+url so the same item always
+         * reports the same ID across renders.
+         *
+         * @param array $item Item config.
+         * @return string Attribute string (with leading space) or empty string.
+         */
+        private function item_id_attr( array $item ) {
+                $id = '';
+                if ( ! empty( $item['id'] ) ) {
+                        $id = (string) $item['id'];
+                } elseif ( ! empty( $item['label'] ) || ! empty( $item['url'] ) ) {
+                        // Stable hash of label+url (so analytics reports the same ID across renders).
+                        $id = 'h_' . substr( md5( (string) ( $item['label'] ?? '' ) . '|' . (string) ( $item['url'] ?? '' ) ), 0, 10 );
+                }
+
+                // Only numeric IDs are accepted by the analytics endpoint (item_id is
+                // an int). For string IDs, we hash to a numeric value.
+                if ( '' === $id ) {
+                        return '';
+                }
+                if ( ! ctype_digit( $id ) ) {
+                        $id = (string) absint( crc32( $id ) );
+                }
+                $id = absint( $id );
+                if ( ! $id ) {
+                        return '';
+                }
+                return ' data-wtm-item-id="' . esc_attr( (string) $id ) . '"';
         }
 
         /**

@@ -15,6 +15,7 @@ use WooTotalMenu\Admin\Pages\Dashboard;
 use WooTotalMenu\Admin\Pages\Menus_List;
 use WooTotalMenu\Admin\Pages\Settings;
 use WooTotalMenu\Admin\Pages\About;
+use WooTotalMenu\Admin\Pages\Analytics_Page;
 
 /**
  * Class Admin_Menu
@@ -95,6 +96,16 @@ class Admin_Menu {
                         'wtm_manage_settings',
                         'wtm-settings',
                         array( Settings::class, 'render' )
+                );
+
+                // v1.7.0 — Submenu: Analytics.
+                add_submenu_page(
+                        self::SLUG_ROOT,
+                        __( 'Analytics', 'woo-total-menu' ),
+                        __( 'Analytics', 'woo-total-menu' ),
+                        'wtm_view_analytics',
+                        'wtm-analytics',
+                        array( Analytics_Page::class, 'render' )
                 );
 
                 // Submenu: Builder (full-screen, no parent in menu).
@@ -285,7 +296,7 @@ class Admin_Menu {
                 }
 
                 // Copy meta.
-                foreach ( array( '_wtm_location', '_wtm_menu_type', '_wtm_config', '_wtm_header_config', '_wtm_footer_config', '_wtm_version' ) as $key ) {
+                foreach ( array( '_wtm_location', '_wtm_menu_type', '_wtm_config', '_wtm_header_config', '_wtm_footer_config', '_wtm_version', '_wtm_conditions' ) as $key ) {
                         $val = get_post_meta( $menu_id, $key, true );
                         if ( '' !== $val && null !== $val ) {
                                 update_post_meta( $new_id, $key, $val );
@@ -525,6 +536,20 @@ class Admin_Menu {
                 .wtm-empty-state .dashicons { font-size: 48px; width: 48px; height: 48px; color: #d1d5db; margin-bottom: 16px; }
                 .wtm-empty-state h3 { color: #374151; margin: 0 0 8px; }
                 .wtm-empty-state p { color: #6b7280; margin: 0 0 20px; }
+
+                /* v1.7.0 — Analytics chart */
+                .wtm-analytics-chart { display: flex; align-items: flex-end; gap: 4px; height: 200px; padding: 16px 0; border-bottom: 1px solid #e5e7eb; overflow-x: auto; }
+                .wtm-analytics-bar-group { display: flex; flex-direction: column; align-items: center; min-width: 36px; flex: 1; gap: 6px; height: 100%; }
+                .wtm-analytics-bars { display: flex; gap: 2px; align-items: flex-end; flex: 1; width: 100%; justify-content: center; }
+                .wtm-analytics-bar { width: 12px; min-height: 2px; border-radius: 3px 3px 0 0; transition: height 0.2s ease; }
+                .wtm-analytics-bar--view { background: #6C5CE7; }
+                .wtm-analytics-bar--click { background: #00B894; }
+                .wtm-analytics-label { font-size: 11px; color: #6b7280; }
+                .wtm-analytics-legend { display: flex; gap: 20px; padding: 12px 0 0; }
+                .wtm-analytics-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #374151; }
+                .wtm-analytics-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
+                .wtm-analytics-swatch--view { background: #6C5CE7; }
+                .wtm-analytics-swatch--click { background: #00B894; }
 CSS;
         }
 

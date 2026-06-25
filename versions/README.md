@@ -33,7 +33,7 @@ Chaque fichier `vX.Y.Z.md` décrit :
 | [v1.4.0](./v1.4.0.md) | 2026-06-26 | ✅ Livrée | Header & Footer Builder — ModulePalette + LayoutCanvas + ModuleProperties, 9 module types, Header_Footer_Renderer + Header_Footer_Injector (wp_body_open + wp_footer), 2 nouvelles meta `_wtm_header_config`/`_wtm_footer_config`, settings `header_footer`, 5 hooks/filters développeurs |
 | [v1.5.0](./v1.5.0.md) | 2026-06-26 | ✅ Livrée | Système de templates — 12 templates intégrés (4 menus + 4 headers + 4 footers), Template_Registry + Templates_Controller (3 routes REST /wtm/v1/templates), galerie visuelle Builder avec mini-previews CSS, store Redux wtm/templates, 2 hooks/filters développeurs |
 | [v1.6.0](./v1.6.0.md) | 2026-06-26 | ✅ Livrée | Phase Polish — Rôles personnalisés (Roles_Manager + 5 routes REST /wtm/v1/roles), 3 blocs Gutenberg server-rendered (wtm/menu, wtm/header, wtm/footer), intégrations Elementor/Bricks/Oxygen, Multisite_Manager (activation réseau + wpmu_new_blog), 8 hooks développeurs |
-| v1.7.x | à venir | 📋 Planifiée | Menus conditionnels, analytics simple |
+| [v1.7.0](./v1.7.0.md) | 2026-06-26 | ✅ Livrée | Menus conditionnels (Condition_Evaluator, 10 types de règles, ET/OU, méta _wtm_conditions, 4 routes REST /conditions, panneau Builder React) + Analytics simple privacy-friendly (compteurs journaliers, 2 routes REST /analytics, tracking JS sendBeacon, page dashboard avec chart HTML/CSS) |
 
 ## 🔗 Liens utiles
 

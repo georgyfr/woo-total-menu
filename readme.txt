@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,27 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.7.0 =
+* New: **Menus conditionnels** — `Condition_Evaluator` (`src/Core/Condition_Evaluator.php`, ~330 lignes). 10 types de règles de visibilité (`page_type`, `post_id`, `post_type`, `taxonomy`, `user_state`, `user_role`, `device`, `date_range`, `url_param`, `language`). Logique ET (toutes) ou OU (au moins une) avec court-circuit. Cache par requête. Validation statique via `Condition_Evaluator::validate()`.
+* New: **Analytics simple** — `Analytics` (`src/Core/Analytics.php`, ~250 lignes). Stockage privacy-friendly (pas d'IP, pas d'user ID, pas de cookie). Compteurs agrégés par jour stockés dans l'option `wtm_analytics_{YYYY-MM-DD}`. 3 types d'événements (`view`, `click`, `hover`). Filtrage par utilisateur connecté. Méthode `cleanup($days)` pour purge auto après 90 jours.
+* New: **API REST `/wtm/v1/menus/{id}/conditions`** (`src/Api/Conditions_Controller.php`, ~260 lignes) — 4 endpoints : `GET` (lecture), `PUT` (remplacement), `DELETE` (effacement), `POST /conditions/test` (évaluation contre la requête courante avec rapport par règle).
+* New: **API REST `/wtm/v1/analytics`** (`src/Api/Analytics_Controller.php`, ~190 lignes) — 2 endpoints : `POST /track` (public, nonce-gated) pour soumettre un événement, `GET /stats` (admin-only) avec filtres `start`/`end`/`menu_id`/`event`/`group_by`.
+* New: **Panneau Builder "Conditions"** (`builder/components/ConditionsPanel.js`, ~280 lignes) — nouvelle modale accessible depuis la barre d'outils supérieure du Builder (icône `dashicons-shield-alt`). Éditeur de règles avec menus déroulants pour les enums et inputs libres pour les autres types. Sélecteur ET/OU. Bouton "Tester sur la page courante". Bouton "Effacer toutes les conditions".
+* New: **Page admin Analytics** (`src/Admin/Pages/Analytics_Page.php`, ~210 lignes) — dashboard `/wp-admin/admin.php?page=wtm-analytics`. 3 cartes KPI (vues, clics, CTR). Chart HTML/CSS pur (pas de JS) des 7/14/30/90 derniers jours. Tableau "par menu" avec CTR. Filtres par période et par menu.
+* New: **Tracking JS frontend** (`assets/front/wtm-frontend.js`, +85 lignes) — module `initAnalytics()`. Événement `view` au chargement (une fois par menu portant `data-wtm-menu-id`). Événement `click` via `navigator.sendBeacon` (survit à la navigation). Fallback `fetch()` avec `keepalive: true`.
+* New: **Méta `_wtm_conditions`** — enregistrée via `register_post_meta()` avec `revisions_enabled = true`. Sanitization custom via `Meta_Boxes::sanitize_conditions()`. Copiée dans les révisions WordPress et restaurée lors d'un restore. Copiée lors d'un duplicate de menu.
+* New: **Attributs data sur le frontend** — `data-wtm-menu-id="{ID}"` ajouté au `<nav>` du menu. `data-wtm-item-id="{ID}"` ajouté aux `<a>` des items `link` (méthode `Menu_Renderer::item_id_attr()` qui produit un hash numérique stable de `label|url` si l'item n'a pas d'ID explicite).
+* New: **3 hooks/filters développeur** — `wtm_condition_result` (filter, surcharge du résultat final), `wtm_condition_rule_{type}` (filter, évaluation de types custom), `wtm_analytics_recorded` (action, post-enregistrement d'événement).
+* Changed: **`Settings.php` — onglet Analytics** : les checkboxes `enabled` et `track_logged` ne sont plus `disabled`. Ajout d'un bouton "Voir le tableau de bord analytics".
+* Changed: **`Menu_Controller`** — `format_item()` expose `conditions`. `create_menu()` et `update_menu()` acceptent un paramètre `conditions` optionnel (validé via `Condition_Evaluator::validate()`).
+* Changed: **`Location_Interceptor`** consulte le `Condition_Evaluator` avant de remplacer un `wp_nav_menu()`. Si les conditions ne matchent pas, le thème retombe sur son walker natif.
+* Changed: **`Header_Footer_Injector`** consulte le `Condition_Evaluator` avant d'injecter le header et le footer.
+* Changed: **`Assets_Loader`** passe la config analytics au JS frontend via `wp_localize_script`.
+* Changed: **`Admin_Menu`** enregistre la nouvelle page `wtm-analytics` (capacité `wtm_view_analytics`).
+* Changed: **`About.php`** — roadmap v1.7.x marquée comme `done`.
+* Changed: **Plugin version** — bump `1.6.0` → `1.7.0` (en-tête + constante `WTM_VERSION` + `package.json`).
+* Privacy: Aucune donnée personnelle n'est collectée par le module Analytics (ni IP, ni user-agent, ni identifiant). Conforme RGPD et CCPA sans nécessiter de bannière de consentement.
 
 = 1.6.0 =
 * New: **Rôles personnalisés** — `Roles_Manager` (`src/Core/Roles_Manager.php`, ~370 lignes). Création, mise à jour et suppression de rôles WordPress dédiés au plugin (préfixe `wtm_` automatique). Protection des 5 rôles WordPress standards contre la suppression. Réassignation automatique des utilisateurs vers `subscriber` lors de la suppression d'un rôle custom. Stockage de la liste des rôles custom dans l'option `wtm_custom_roles`.

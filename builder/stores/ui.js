@@ -45,6 +45,8 @@ const DEFAULT_STATE = {
         activeMode: 'menu',
         // v1.5.0 — Templates Gallery modal open/closed.
         isTemplatesOpen: false,
+        // v1.7.0 — Conditions modal open/closed.
+        isConditionsOpen: false,
 };
 
 const actions = {
@@ -118,6 +120,13 @@ const actions = {
         closeTemplates() {
                 return { type: 'SET_TEMPLATES_OPEN', isOpen: false };
         },
+        // === v1.7.0 — Conditions modal ===
+        openConditions() {
+                return { type: 'SET_CONDITIONS_OPEN', isOpen: true };
+        },
+        closeConditions() {
+                return { type: 'SET_CONDITIONS_OPEN', isOpen: false };
+        },
 };
 
 const selectors = {
@@ -154,6 +163,10 @@ const selectors = {
         isTemplatesOpen(state) {
                 return !!state.isTemplatesOpen;
         },
+        // v1.7.0
+        isConditionsOpen(state) {
+                return !!state.isConditionsOpen;
+        },
 };
 
 const reducer = (state = DEFAULT_STATE, action) => {
@@ -179,6 +192,8 @@ const reducer = (state = DEFAULT_STATE, action) => {
                         return { ...state, activeMode: action.mode };
                 case 'SET_TEMPLATES_OPEN':
                         return { ...state, isTemplatesOpen: action.isOpen };
+                case 'SET_CONDITIONS_OPEN':
+                        return { ...state, isConditionsOpen: action.isOpen };
                 default:
                         return state;
         }

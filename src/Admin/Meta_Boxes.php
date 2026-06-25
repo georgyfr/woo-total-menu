@@ -36,6 +36,8 @@ class Meta_Boxes {
         const META_HEADER_CONFIG = '_wtm_header_config';
         const META_FOOTER_CONFIG = '_wtm_footer_config';
         const META_VERSION       = '_wtm_version';
+        // v1.7.0 — Conditional menus (spec §1.4.x — menus conditionnels).
+        const META_CONDITIONS    = '_wtm_conditions';
 
         /**
          * Constructor — registers hooks.
@@ -150,6 +152,26 @@ class Meta_Boxes {
                                 'auth_callback'     => array( $this, 'auth_meta' ),
                         )
                 );
+
+                // v1.7.0 — _wtm_conditions : règles de visibilité (JSON optionnel).
+                // Stocké en JSON string pour des raisons de performance (1 seule lecture
+                // DB). Exposé en REST via prepare_callback pour qu'il soit décodé en
+                // objet/array côté client.
+                register_post_meta(
+                        CPT_Manager::POST_TYPE,
+                        self::META_CONDITIONS,
+                        array(
+                                'type'              => 'string',
+                                'single'            => true,
+                                'default'           => '',
+                                'show_in_rest'      => array(
+                                        'prepare_callback' => array( $this, 'rest_prepare_json' ),
+                                ),
+                                'revisions_enabled' => true, // v1.7.0 — keep history.
+                                'sanitize_callback' => array( $this, 'sanitize_conditions' ),
+                                'auth_callback'     => array( $this, 'auth_meta' ),
+                        )
+                );
         }
 
         /**
@@ -172,6 +194,7 @@ class Meta_Boxes {
                         self::META_HEADER_CONFIG,
                         self::META_FOOTER_CONFIG,
                         self::META_VERSION,
+                        self::META_CONDITIONS, // v1.7.0.
                 );
                 foreach ( $wtm_keys as $k ) {
                         if ( ! in_array( $k, $keys, true ) ) {
@@ -204,6 +227,7 @@ class Meta_Boxes {
                         self::META_HEADER_CONFIG,
                         self::META_FOOTER_CONFIG,
                         self::META_VERSION,
+                        self::META_CONDITIONS, // v1.7.0.
                 );
                 foreach ( $wtm_keys as $key ) {
                         $rev_value = get_metadata( 'post', $revision_id, $key, true );
@@ -306,6 +330,34 @@ class Meta_Boxes {
                 }
                 $decoded = json_decode( $value, true );
                 return null === $decoded ? $value : $decoded;
+        }
+
+        /**
+         * v1.7.0 — Sanitize the _wtm_conditions meta.
+         *
+         * Accepts either a JSON string or a decoded array. Returns a JSON string
+         * (empty string if no rules). Delegates validation to
+         * Condition_Evaluator::validate.
+         *
+         * @param mixed $value Raw value (already wp_unslashed by WP core).
+         * @return string Sanitized JSON string (unslashed).
+         */
+        public function sanitize_conditions( $value ) {
+                if ( '' === $value || null === $value ) {
+                        return '';
+                }
+                $decoded = is_string( $value ) ? json_decode( $value, true ) : $value;
+                if ( ! is_array( $decoded ) ) {
+                        return '';
+                }
+                $clean = \WooTotalMenu\Core\Condition_Evaluator::validate( $decoded );
+                if ( is_wp_error( $clean ) ) {
+                        return '';
+                }
+                if ( empty( $clean['rules'] ) ) {
+                        return '';
+                }
+                return wp_json_encode( $clean );
         }
 
         /**

@@ -42,7 +42,7 @@ class About {
                         array( 'v1.4.x', 'Header & Footer Builder (ModulePalette, LayoutCanvas, 9 module types, injection globale)', 'done' ),
                         array( 'v1.5.x', 'Système de templates — 12 templates intégrés (4 menus + 4 headers + 4 footers), galerie visuelle, API REST /wtm/v1/templates', 'done' ),
                         array( 'v1.6.x', 'Rôles personnalisés, blocs Gutenberg, compatibilité Elementor/Bricks/Oxygen, multisite', 'done' ),
-                        array( 'v1.7.x', 'Menus conditionnels, analytics simple', 'todo' ),
+                        array( 'v1.7.x', 'Menus conditionnels, analytics simple', 'done' ),
                 );
                 ?>
                 <div class="wrap wtm-page">

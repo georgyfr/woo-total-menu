@@ -271,6 +271,10 @@ class Menu_Controller {
                                 'description'       => __( 'Configuration JSON du footer (optionnel).', 'woo-total-menu' ),
                                 'type'              => array( 'object', 'string', 'null' ),
                         ),
+                        'conditions' => array(
+                                'description'       => __( 'Conditions de visibilité du menu (v1.7.0).', 'woo-total-menu' ),
+                                'type'              => array( 'object', 'string', 'null' ),
+                        ),
                         'version' => array(
                                 'description'       => __( 'Version du schéma de données.', 'woo-total-menu' ),
                                 'type'              => 'integer',
@@ -291,10 +295,12 @@ class Menu_Controller {
                 $config_raw        = get_post_meta( $post->ID, '_wtm_config', true );
                 $header_config_raw = get_post_meta( $post->ID, '_wtm_header_config', true );
                 $footer_config_raw = get_post_meta( $post->ID, '_wtm_footer_config', true );
+                $conditions_raw    = get_post_meta( $post->ID, '_wtm_conditions', true );
 
                 $config        = $config_raw ? json_decode( $config_raw, true ) : null;
                 $header_config = $header_config_raw ? json_decode( $header_config_raw, true ) : null;
                 $footer_config = $footer_config_raw ? json_decode( $footer_config_raw, true ) : null;
+                $conditions    = $conditions_raw ? json_decode( $conditions_raw, true ) : null;
 
                 return array(
                         'id'            => (int) $post->ID,
@@ -306,6 +312,7 @@ class Menu_Controller {
                         'config'        => $config ?: array( 'version' => 1, 'items' => array() ),
                         'header_config' => $header_config ?: null,
                         'footer_config' => $footer_config ?: null,
+                        'conditions'    => $conditions ?: null,
                         'version'       => (int) ( get_post_meta( $post->ID, '_wtm_version', true ) ?: WTM_DB_VERSION ),
                         'date_created'  => mysql2date( 'c', $post->post_date_gmt, false ),
                         'date_modified' => mysql2date( 'c', $post->post_modified_gmt, false ),
@@ -390,9 +397,10 @@ class Menu_Controller {
                 $status    = $request->get_param( 'status' ) ?: 'publish';
                 $menu_type = $request->get_param( 'menu_type' ) ?: 'horizontal';
                 $location  = $request->get_param( 'location' ) ?: 'primary';
-                $config    = $request->get_param( 'config' );
-                $header    = $request->get_param( 'header_config' );
-                $footer    = $request->get_param( 'footer_config' );
+                $config     = $request->get_param( 'config' );
+                $header     = $request->get_param( 'header_config' );
+                $footer     = $request->get_param( 'footer_config' );
+                $conditions = $request->get_param( 'conditions' );
 
                 if ( empty( $title ) ) {
                         return new WP_Error(
@@ -430,6 +438,19 @@ class Menu_Controller {
                         }
                 }
 
+                // v1.7.0 — Validate conditions (optional).
+                $conditions_decoded = null;
+                if ( null !== $conditions && '' !== $conditions ) {
+                        $conditions_decoded = is_string( $conditions )
+                                ? json_decode( $conditions, true )
+                                : $conditions;
+                        $clean = \WooTotalMenu\Core\Condition_Evaluator::validate( $conditions_decoded );
+                        if ( is_wp_error( $clean ) ) {
+                                return $clean;
+                        }
+                        $conditions_decoded = $clean;
+                }
+
                 // Insert post.
                 $post_id = wp_insert_post(
                         array(
@@ -454,6 +475,10 @@ class Menu_Controller {
                 }
                 if ( $footer_decoded ) {
                         update_post_meta( $post_id, '_wtm_footer_config', wp_slash( wp_json_encode( $footer_decoded ) ) );
+                }
+                // v1.7.0 — Save conditions (only if non-empty rules).
+                if ( $conditions_decoded && ! empty( $conditions_decoded['rules'] ) ) {
+                        update_post_meta( $post_id, '_wtm_conditions', wp_slash( wp_json_encode( $conditions_decoded ) ) );
                 }
 
                 // Invalidate cache.
@@ -603,6 +628,24 @@ class Menu_Controller {
                                         return $footer_decoded;
                                 }
                                 update_post_meta( $post_id, '_wtm_footer_config', wp_slash( wp_json_encode( $footer_decoded ) ) );
+                        }
+                }
+
+                // v1.7.0 — Update conditions (optional, can be cleared).
+                if ( isset( $json_params['conditions'] ) ) {
+                        $conditions = $json_params['conditions'];
+                        if ( '' === $conditions || null === $conditions || empty( $conditions['rules'] ) ) {
+                                delete_post_meta( $post_id, '_wtm_conditions' );
+                        } else {
+                                $clean = \WooTotalMenu\Core\Condition_Evaluator::validate( $conditions );
+                                if ( is_wp_error( $clean ) ) {
+                                        return $clean;
+                                }
+                                if ( ! empty( $clean['rules'] ) ) {
+                                        update_post_meta( $post_id, '_wtm_conditions', wp_slash( wp_json_encode( $clean ) ) );
+                                } else {
+                                        delete_post_meta( $post_id, '_wtm_conditions' );
+                                }
                         }
                 }
 

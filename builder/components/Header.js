@@ -49,7 +49,7 @@ export default function Header({ title, menuType, isDirty, isLoading }) {
         const canUndo = useSelect((select) => select(WTM_STORE_NAME).canUndo(), []);
         const canRedo = useSelect((select) => select(WTM_STORE_NAME).canRedo(), []);
         const menu = useSelect((select) => select(WTM_STORE_NAME).getMenu(), []);
-        const { setDevice, setAnnouncement, openHistory, setMode, openTemplates } = useDispatch(UI_STORE_NAME);
+        const { setDevice, setAnnouncement, openHistory, setMode, openTemplates, openConditions } = useDispatch(UI_STORE_NAME);
 
         // === Global keyboard shortcuts (spec §9.9) ===
         useEffect(() => {
@@ -107,6 +107,12 @@ export default function Header({ title, menuType, isDirty, isLoading }) {
                 setAnnouncement(__('Galerie de templates ouverte.', 'woo-total-menu'));
         };
 
+        // v1.7.0 — Open the Conditions editor modal.
+        const handleConditions = () => {
+                openConditions();
+                setAnnouncement(__('Éditeur de conditions ouvert.', 'woo-total-menu'));
+        };
+
         return (
                 <header className="wtm-builder__header">
                         <div className="wtm-builder__header-left">
@@ -160,6 +166,17 @@ export default function Header({ title, menuType, isDirty, isLoading }) {
                                                 aria-label={__('Galerie de templates', 'woo-total-menu')}
                                         >
                                                 <span className="dashicons dashicons-layout"></span>
+                                        </button>
+                                        {/* v1.7.0 — Conditions editor button */}
+                                        <button
+                                                type="button"
+                                                className="wtm-builder__history-btn wtm-builder__conditions-btn"
+                                                onClick={handleConditions}
+                                                disabled={!menu?.id || isLoading}
+                                                title={__('Conditions d\'affichage', 'woo-total-menu')}
+                                                aria-label={__('Conditions d\'affichage', 'woo-total-menu')}
+                                        >
+                                                <span className="dashicons dashicons-shield-alt"></span>
                                         </button>
                                 </div>
 

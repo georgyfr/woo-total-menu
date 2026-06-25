@@ -669,6 +669,88 @@
         }
 
         // ========================================================================
+        // v1.7.0 — Analytics tracking (privacy-friendly, sendBeacon)
+        // ========================================================================
+        //
+        // Tracks 2 event types:
+        //   - view  : fired once per menu when it becomes visible
+        //   - click : fired when a user clicks a menu item
+        //
+        // No personal data is collected (no IP, no user ID, no cookie).
+        // Uses navigator.sendBeacon for click tracking so events fire even
+        // when the user navigates away immediately.
+
+        var analyticsConfig = (config.analytics) || {};
+        var trackedViews = {};
+
+        function trackEvent(menuId, event, itemId) {
+                if (!analyticsConfig.enabled || !menuId) return;
+                var url = analyticsConfig.trackUrl;
+                if (!url) return;
+
+                var payload = {
+                        menu_id: parseInt(menuId, 10) || 0,
+                        event: event,
+                        item_id: parseInt(itemId, 10) || 0
+                };
+
+                // sendBeacon for click events (survives navigation).
+                if (event === "click" && navigator.sendBeacon) {
+                        try {
+                                var blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+                                navigator.sendBeacon(url, blob);
+                                return;
+                        } catch (e) {
+                                // fall through to fetch.
+                        }
+                }
+
+                // fetch for view events (no navigation pressure).
+                try {
+                        fetch(url, {
+                                method: "POST",
+                                headers: {
+                                        "Content-Type": "application/json",
+                                        "X-WP-Nonce": analyticsConfig.restNonce || ""
+                                },
+                                body: JSON.stringify(payload),
+                                credentials: "same-origin",
+                                keepalive: true
+                        });
+                } catch (e) {
+                        if (window.console) console.warn("[WTM] analytics failed:", e);
+                }
+        }
+
+        function initAnalytics() {
+                if (!analyticsConfig.enabled) return;
+
+                // View tracking: any element with data-wtm-menu-id triggers a view event.
+                var menuEls = document.querySelectorAll("[data-wtm-menu-id]");
+                for (var i = 0; i < menuEls.length; i++) {
+                        var mid = menuEls[i].getAttribute("data-wtm-menu-id");
+                        if (!mid || trackedViews[mid]) continue;
+                        trackedViews[mid] = true;
+                        trackEvent(mid, "view", 0);
+                }
+
+                // Click tracking on items with data-wtm-item-id.
+                document.addEventListener("click", function (e) {
+                        var target = e.target.closest("[data-wtm-item-id]");
+                        if (!target) return;
+                        var menuId = target.getAttribute("data-wtm-menu-id");
+                        var itemId = target.getAttribute("data-wtm-item-id");
+                        // Fall back to the closest ancestor with menu-id.
+                        if (!menuId) {
+                                var ancestor = target.closest("[data-wtm-menu-id]");
+                                if (ancestor) menuId = ancestor.getAttribute("data-wtm-menu-id");
+                        }
+                        if (!menuId || !itemId) return;
+                        trackEvent(menuId, "click", itemId);
+                }, true);
+        }
+
+        // ========================================================================
         // Init on DOM ready + when new content is injected (e.g. AJAX)
         // ========================================================================
 
@@ -683,6 +765,7 @@
                         initCartDrawer();
                         initLiveSearch();
                         initNewsletter();
+                        initAnalytics();
                 } catch (err) {
                         if (window.console) console.error("[WTM] init error:", err);
                 }
