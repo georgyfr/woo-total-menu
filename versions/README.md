@@ -25,8 +25,9 @@ Chaque fichier `vX.Y.Z.md` décrit :
 | [v1.1.0](./v1.1.0.md) | 2026-06-24 | ✅ Livrée | Builder visuel React — squelette (3 colonnes, stores @wordpress/data, build pipeline) |
 | [v1.1.1](./v1.1.1.md) | 2026-06-24 | ✅ Livrée | CRUD items dans l'UI (6 types, suppression, renommage inline, édition propriétés) |
 | [v1.1.2](./v1.1.2.md) | 2026-06-25 | ✅ Livrée | Drag & drop arborescent + Undo/Redo + raccourcis clavier + a11y ARIA |
-| v1.1.3 | à venir | 📋 Planifiée | Live preview via iframe + postMessage |
-| v1.1.4 | à venir | 📋 Planifiée | Undo/Redo révisions WordPress + historique |
+| [v1.1.3](./v1.1.3.md) | 2026-06-25 | ✅ Livrée | Fixes UX : indicateur drop temps réel + migration React 18 createRoot + annonce ARIA unique |
+| v1.1.4 | à venir | 📋 Planifiée | Live preview via iframe + postMessage |
+| v1.1.5 | à venir | 📋 Planifiée | Undo/Redo révisions WordPress + historique |
 | v1.2.x | à venir | 📋 Planifiée | Rendu frontend (Menu_Walker, méga menu, off-canvas mobile) |
 | v1.3.x | à venir | 📋 Planifiée | Widgets WooCommerce (catégories, produits, mini-panier) |
 | v1.4.x | à venir | 📋 Planifiée | Header & Footer Builder |

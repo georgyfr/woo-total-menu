@@ -5,6 +5,43 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-06-25
+
+### Fixed
+
+- **Indicateur de drop temps réel** : l'indicateur de position (before/after/inside)
+  ne se rafraîchissait pas quand le curseur se déplaçait verticalement à l'intérieur
+  d'un même item. Le calcul utilisait `sortable.activatorEvent.clientY` qui est figé
+  au moment du `pointerdown`. Désormais, un listener `pointermove` global met à jour
+  un `useRef` (`cursorPosRef`) + un compteur `cursorTick` qui déclenche le recompute
+  de l'effet. Le `handleDragEnd` du `TreePanel` utilise également un `liveCursorYRef`
+  pour le calcul final de la position (spec §6.3.2).
+- **Migration React 18** : remplacement de `ReactDOM.render()` (déprécié) par
+  `createRoot()` depuis `@wordpress/element`. Corrige le warning React :
+  « ReactDOM.render is no longer supported in React 18. Use createRoot instead. »
+  et active les fonctionnalités concurrentes de React 18 (spec §9.2).
+- **Double annonce ARIA** : `@dnd-kit` émet sa propre `LiveRegion` en anglais
+  (« Draggable item X was dropped over droppable area Y ») en plus de notre annonce
+  française. Désormais, un prop `accessibility={{ announcements: {...} }}` custom
+  est passé au `DndContext` avec toutes les callbacks retournant une chaîne vide,
+  ce qui neutralise l'annonce anglaise. Seule l'annonce française reste (spec §6.7).
+  Note : en `@dnd-kit` v6, `announcements` doit être encapsulé dans `accessibility`,
+  pas passé au premier niveau (sinon silencieusement ignoré).
+
+### Changed
+
+- `builder/index.js` : import `createRoot` au lieu de `render`, utilisation de
+  `createRoot(container).render(<App />)`.
+- `builder/components/SortableTreeItem.js` : ajout d'un `useEffect` qui enregistre
+  un listener `pointermove` global (uniquement pendant un drag) et met à jour
+  `cursorPosRef.current` + incrémente `cursorTick` pour déclencher le recompute.
+- `builder/components/TreePanel.js` : ajout d'un `liveCursorYRef` mis à jour par
+  `pointermove` global, utilisé dans `handleDragEnd` pour le calcul final.
+- `builder/components/TreePanel.js` : ajout du prop `accessibility={accessibility}`
+  au `DndContext`, encapsulant un sous-objet `announcements` avec callbacks
+  retournant `''` (la syntaxe `announcements={...}` au premier niveau ne fonctionne
+  pas en `@dnd-kit` v6 — elle est silencieusement ignorée).
+
 ## [1.1.2] - 2026-06-25
 
 ### Added

@@ -1,11 +1,13 @@
 /**
  * Entry point of the Woo Total Menu Builder React app.
  *
+ * Uses React 18's createRoot API (replaces the deprecated ReactDOM.render).
+ *
  * @package WooTotalMenu
  * @since 1.1.0
  */
 
-import { render } from '@wordpress/element';
+import { createRoot } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 import App from './components/App';
@@ -36,5 +38,8 @@ if (container) {
                 initialState.isNew = container.dataset.isNew === '1';
         }
 
-        render(<App initialState={initialState} />, container);
+        // React 18 — createRoot enables concurrent features and silences the
+        // "ReactDOM.render is no longer supported" warning (spec §9.2).
+        const root = createRoot(container);
+        root.render(<App initialState={initialState} />);
 }

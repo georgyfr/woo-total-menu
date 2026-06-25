@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,16 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.1.3 =
+* Fix: Indicateur de drop qui ne se rafraîchissait pas en temps réel quand le curseur se déplaçait verticalement à l'intérieur d'un même item (le calcul utilisait cursorY figé au pointerdown au lieu du cursorY courant)
+* Fix: Migration de ReactDOM.render → createRoot (React 18 API moderne) — corrige le warning "ReactDOM.render is no longer supported in React 18" et active les fonctionnalités concurrentes
+* Fix: Double annonce ARIA pour les lecteurs d'écran (l'anglais par défaut de @dnd-kit + le français du plugin) — désormais seule l'annonce française est émise
+* Update: SortableTreeItem.js ajoute un listener pointermove global avec useREF cursorPosRef + state cursorTick pour déclencher le recompute de l'indicateur
+* Update: TreePanel.js ajoute liveCursorYRef mis à jour par pointermove, utilisé par handleDragEnd pour le calcul final de la position
+* Update: index.js migré vers createRoot (import depuis @wordpress/element)
+* Update: TreePanel.js passe un prop accessibility={{announcements:{}}} au DndContext pour neutraliser la LiveRegion par défaut (en @dnd-kit v6, announcements doit être encapsulé dans accessibility, pas passé au premier niveau)
+* Update: Bump version 1.1.2 → 1.1.3 (woo-total-menu.php, package.json, readme.txt)
 
 = 1.1.2 =
 * New: Drag & drop arborescent complet via @dnd-kit (réordonnancement + nesting + cross-level moves)
