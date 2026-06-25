@@ -1,0 +1,790 @@
+/**
+ * Woo Total Menu — Frontend styles
+ *
+ * Base CSS for all 4 menu types (horizontal, vertical, off-canvas, footer),
+ * mega panels, badges, widgets, and responsive behavior.
+ *
+ * Spec reference: §5 (maquettes frontend), §2.6.1 (~15 Ko minified target).
+ *
+ * Version: 1.2.0
+ */
+
+/* ==========================================================================
+   1. Base menu structure
+   ========================================================================== */
+
+.wtm-menu {
+	font-family: var(--wtm-font, Inter, system-ui, sans-serif);
+	font-size: var(--wtm-base-size, 14px);
+	color: var(--wtm-text, #2D3436);
+	background: var(--wtm-bg, #FFFFFF);
+	box-sizing: border-box;
+}
+
+.wtm-menu *,
+.wtm-menu *::before,
+.wtm-menu *::after {
+	box-sizing: border-box;
+}
+
+.wtm-menu__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wtm-menu__list--root {
+	display: flex;
+	align-items: stretch;
+	gap: 4px;
+	padding: 0 16px;
+}
+
+.wtm-menu__list--sub {
+	flex-direction: column;
+	position: absolute;
+	top: 100%;
+	left: 0;
+	min-width: 240px;
+	background: #FFFFFF;
+	border: 1px solid #E2E8F0;
+	border-radius: 0 0 var(--wtm-radius, 6px) var(--wtm-radius, 6px);
+	box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+	padding: 8px 0;
+	z-index: 50;
+	display: none;
+}
+
+.wtm-menu__item {
+	position: relative;
+}
+
+.wtm-menu__item--has-children > .wtm-menu__link::after {
+	content: "▾";
+	margin-left: 6px;
+	font-size: 10px;
+	color: #6B7280;
+	transition: transform 0.15s ease;
+}
+
+.wtm-menu__item--has-children:hover > .wtm-menu__link::after,
+.wtm-menu__item--has-children:focus-within > .wtm-menu__link::after {
+	transform: rotate(180deg);
+}
+
+.wtm-menu__item:hover > .wtm-menu__list--sub,
+.wtm-menu__item:focus-within > .wtm-menu__list--sub {
+	display: block;
+}
+
+/* ==========================================================================
+   2. Link + label + icon + badge
+   ========================================================================== */
+
+.wtm-menu__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	color: var(--wtm-text, #2D3436);
+	text-decoration: none;
+	border-radius: 4px;
+	font-weight: 500;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	font-family: inherit;
+	font-size: inherit;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.wtm-menu__link:hover,
+.wtm-menu__link:focus {
+	background: rgba(108, 92, 231, 0.08);
+	color: var(--wtm-primary, #6C5CE7);
+}
+
+.wtm-menu__list--sub .wtm-menu__link {
+	display: flex;
+	width: 100%;
+	padding: 10px 18px;
+	line-height: 1.4;
+}
+
+.wtm-menu__list--sub .wtm-menu__link:hover {
+	background: #F1F0FF;
+	color: var(--wtm-primary, #6C5CE7);
+}
+
+.wtm-menu__label {
+	white-space: nowrap;
+}
+
+.wtm-menu__icon {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.wtm-menu__badge {
+	display: inline-block;
+	background: var(--wtm-primary, #6C5CE7);
+	color: #FFFFFF;
+	font-size: 10px;
+	font-weight: 700;
+	padding: 2px 6px;
+	border-radius: 12px;
+	margin-left: 4px;
+	line-height: 1;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.wtm-menu__caret {
+	margin-left: 4px;
+	font-size: 10px;
+	transition: transform 0.15s ease;
+}
+
+.wtm-menu__caret--right::after {
+	content: "▶";
+}
+
+/* ==========================================================================
+   3. Mega container (horizontal) — spec §5.4
+   ========================================================================== */
+
+.wtm-menu__mega-trigger {
+	width: 100%;
+}
+
+.wtm-menu__item--mega:hover > .wtm-menu__list--sub,
+.wtm-menu__item--mega:focus-within > .wtm-menu__list--sub,
+.wtm-menu__item--mega.is-open > .wtm-menu__list--sub {
+	display: block;
+}
+
+.wtm-menu__mega-panel {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	min-width: 600px;
+	max-width: 900px;
+	background: #FFFFFF;
+	border: 1px solid #E2E8F0;
+	border-radius: 0 0 var(--wtm-radius, 6px) var(--wtm-radius, 6px);
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.10);
+	padding: 20px;
+	z-index: 60;
+	display: none;
+	animation: wtm-fade-slide 0.2s ease-out;
+}
+
+.wtm-menu__item--mega:hover > .wtm-menu__mega-panel,
+.wtm-menu__item--mega:focus-within > .wtm-menu__mega-panel,
+.wtm-menu__item--mega.is-open > .wtm-menu__mega-panel {
+	display: block;
+}
+
+.wtm-menu__mega-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 20px;
+}
+
+.wtm-menu__mega-col {
+	min-width: 0;
+}
+
+.wtm-menu__mega-col > .wtm-menu__list--sub {
+	position: static;
+	box-shadow: none;
+	border: none;
+	padding: 0;
+	display: block;
+}
+
+@keyframes wtm-fade-slide {
+	from { opacity: 0; transform: translateY(-6px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   4. Title + separator items
+   ========================================================================== */
+
+.wtm-menu__title {
+	list-style: none;
+	padding: 8px 18px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #6B7280;
+}
+
+.wtm-menu__title span {
+	display: block;
+}
+
+.wtm-menu__separator {
+	list-style: none;
+	height: 1px;
+	background: #E2E8F0;
+	margin: 4px 12px;
+}
+
+/* ==========================================================================
+   5. Vertical menu — spec §5.5
+   ========================================================================== */
+
+.wtm-menu--vertical,
+.wtm-menu__list--vertical {
+	flex-direction: column;
+}
+
+.wtm-menu--vertical .wtm-menu__list--root {
+	padding: 8px 0;
+}
+
+.wtm-menu--vertical .wtm-menu__link {
+	width: 100%;
+	padding: 12px 16px;
+	justify-content: flex-start;
+}
+
+.wtm-menu--vertical .wtm-menu__list--sub {
+	position: static;
+	box-shadow: none;
+	border: none;
+	padding: 0 0 0 16px;
+	background: transparent;
+}
+
+.wtm-menu__item--vertical {
+	width: 100%;
+}
+
+.wtm-menu__item--vertical.wtm-menu__item--active > .wtm-menu__link {
+	border-left: 3px solid var(--wtm-primary, #6C5CE7);
+	background: #F1F0FF;
+	color: var(--wtm-primary, #6C5CE7);
+}
+
+/* ==========================================================================
+   6. Off-canvas menu — spec §5.6
+   ========================================================================== */
+
+.wtm-offcanvas__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.wtm-offcanvas__bars,
+.wtm-offcanvas__bars::before,
+.wtm-offcanvas__bars::after {
+	display: block;
+	width: 22px;
+	height: 2px;
+	background: var(--wtm-text, #2D3436);
+	transition: transform 0.25s ease, opacity 0.15s ease;
+}
+
+.wtm-offcanvas__bars {
+	position: relative;
+}
+
+.wtm-offcanvas__bars::before,
+.wtm-offcanvas__bars::after {
+	content: "";
+	position: absolute;
+	left: 0;
+}
+
+.wtm-offcanvas__bars::before { top: -7px; }
+.wtm-offcanvas__bars::after  { top: 7px; }
+
+.wtm-offcanvas__toggle[aria-expanded="true"] .wtm-offcanvas__bars {
+	background: transparent;
+}
+
+.wtm-offcanvas__toggle[aria-expanded="true"] .wtm-offcanvas__bars::before {
+	transform: translateY(7px) rotate(45deg);
+}
+
+.wtm-offcanvas__toggle[aria-expanded="true"] .wtm-offcanvas__bars::after {
+	transform: translateY(-7px) rotate(-45deg);
+}
+
+.wtm-offcanvas {
+	position: fixed;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 320px;
+	max-width: 80vw;
+	background: #FFFFFF;
+	box-shadow: 0 0 40px rgba(0, 0, 0, 0.20);
+	z-index: 1000;
+	transform: translateX(-100%);
+	transition: transform 0.3s ease;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+}
+
+.wtm-offcanvas.is-open {
+	transform: translateX(0);
+}
+
+.wtm-offcanvas__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px;
+	border-bottom: 1px solid #E2E8F0;
+	flex-shrink: 0;
+}
+
+.wtm-offcanvas__title {
+	font-weight: 700;
+	font-size: 16px;
+}
+
+.wtm-offcanvas__close {
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	position: relative;
+}
+
+.wtm-offcanvas__close span::before,
+.wtm-offcanvas__close span::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 18px;
+	height: 2px;
+	background: var(--wtm-text, #2D3436);
+	transform-origin: center;
+}
+
+.wtm-offcanvas__close span::before {
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.wtm-offcanvas__close span::after {
+	transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.wtm-offcanvas__body {
+	padding: 12px 0;
+	flex: 1 1 auto;
+	overflow-y: auto;
+}
+
+.wtm-offcanvas__overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 999;
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.wtm-offcanvas__overlay.is-visible {
+	opacity: 1;
+	visibility: visible;
+}
+
+body.wtm-offcanvas-open {
+	overflow: hidden;
+}
+
+/* ==========================================================================
+   7. Footer menu — spec §5.7
+   ========================================================================== */
+
+.wtm-menu__footer-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 24px;
+	padding: 20px;
+}
+
+.wtm-menu__footer-title {
+	margin: 0 0 12px;
+	font-size: 13px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: inherit;
+}
+
+.wtm-menu__list--footer {
+	flex-direction: column;
+	gap: 4px;
+}
+
+.wtm-menu__list--footer .wtm-menu__link {
+	padding: 6px 0;
+}
+
+/* ==========================================================================
+   8. Widgets — spec §5.9
+   ========================================================================== */
+
+.wtm-menu__widget {
+	list-style: none;
+}
+
+.wtm-menu__widget-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #9CA3AF;
+	margin-bottom: 6px;
+	padding: 0 14px;
+}
+
+.wtm-menu__widget-body {
+	padding: 0 14px;
+}
+
+.wtm-banner {
+	display: block;
+	padding: 12px 16px;
+	border-radius: var(--wtm-radius, 6px);
+	text-decoration: none;
+	font-weight: 600;
+	text-align: center;
+}
+
+.wtm-banner__text {
+	display: block;
+}
+
+.wtm-product-grid {
+	display: grid;
+	grid-template-columns: repeat(var(--wtm-pg-cols, 2), 1fr);
+	gap: 10px;
+}
+
+.wtm-product-card {
+	border: 1px solid #E2E8F0;
+	border-radius: var(--wtm-radius, 6px);
+	overflow: hidden;
+	background: #FFFFFF;
+	transition: box-shadow 0.2s ease;
+}
+
+.wtm-product-card:hover {
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.wtm-product-card__media {
+	display: block;
+	background: #F3F4F6;
+	aspect-ratio: 1 / 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.wtm-product-card__img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+
+.wtm-product-card__img--placeholder {
+	width: 60%;
+	height: 60%;
+	background: #E5E7EB;
+	border-radius: 4px;
+}
+
+.wtm-product-card__body {
+	padding: 8px;
+	text-align: center;
+}
+
+.wtm-product-card__title {
+	display: block;
+	font-size: 12px;
+	color: var(--wtm-text, #2D3436);
+	text-decoration: none;
+	margin-bottom: 4px;
+	font-weight: 500;
+}
+
+.wtm-product-card__price {
+	font-size: 12px;
+	color: var(--wtm-primary, #6C5CE7);
+	font-weight: 700;
+	margin-bottom: 6px;
+}
+
+.wtm-product-card__btn {
+	display: inline-block;
+	padding: 4px 10px;
+	background: var(--wtm-primary, #6C5CE7);
+	color: #FFFFFF;
+	font-size: 11px;
+	text-decoration: none;
+	border-radius: 4px;
+	transition: opacity 0.15s ease;
+}
+
+.wtm-product-card__btn:hover {
+	opacity: 0.85;
+}
+
+.wtm-category-grid {
+	display: grid;
+	grid-template-columns: repeat(var(--wtm-cg-cols, 2), 1fr);
+	gap: 8px;
+}
+
+.wtm-category-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	text-decoration: none;
+	color: var(--wtm-text, #2D3436);
+}
+
+.wtm-category-card__media {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	background: #F3F4F6;
+	border-radius: var(--wtm-radius, 6px);
+	overflow: hidden;
+}
+
+.wtm-category-card__img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: cover;
+}
+
+.wtm-category-card__img--placeholder {
+	width: 50%;
+	height: 50%;
+	background: #E5E7EB;
+	border-radius: 4px;
+}
+
+.wtm-category-card__name {
+	font-size: 12px;
+	font-weight: 500;
+	text-align: center;
+}
+
+.wtm-mini-cart {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	text-decoration: none;
+	color: var(--wtm-text, #2D3436);
+	border: 1px solid #E2E8F0;
+	border-radius: var(--wtm-radius, 6px);
+	background: #FFFFFF;
+}
+
+.wtm-mini-cart__icon {
+	width: 18px;
+	height: 18px;
+	display: inline-block;
+	background: currentColor;
+	mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7 4h-2l-1 2h3l3 8h8l2-6h-11l-1-2z'/></svg>") no-repeat center / contain;
+	-webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7 4h-2l-1 2h3l3 8h8l2-6h-11l-1-2z'/></svg>") no-repeat center / contain;
+}
+
+.wtm-mini-cart__count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	background: var(--wtm-primary, #6C5CE7);
+	color: #FFFFFF;
+	border-radius: 9px;
+	font-size: 11px;
+	font-weight: 700;
+}
+
+.wtm-mini-cart__total {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.wtm-search {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px;
+	background: #FFFFFF;
+	border: 1px solid #CBD5E1;
+	border-radius: 20px;
+}
+
+.wtm-search__input {
+	flex: 1;
+	border: none;
+	background: transparent;
+	padding: 6px 10px;
+	font-size: 13px;
+	font-family: inherit;
+	outline: none;
+	min-width: 100px;
+}
+
+.wtm-search__btn {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: none;
+	background: var(--wtm-primary, #6C5CE7);
+	border-radius: 50%;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.wtm-search__btn span {
+	width: 14px;
+	height: 14px;
+	display: inline-block;
+	background: #FFFFFF;
+	mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M10 2a8 8 0 105.29 14.01l5.85 5.85 1.41-1.41-5.85-5.85A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z'/></svg>") no-repeat center / contain;
+	-webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M10 2a8 8 0 105.29 14.01l5.85 5.85 1.41-1.41-5.85-5.85A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z'/></svg>") no-repeat center / contain;
+}
+
+.wtm-custom-link {
+	display: inline-block;
+	padding: 8px 14px;
+	border-radius: var(--wtm-radius, 6px);
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.wtm-widget-empty {
+	padding: 12px;
+	color: #9CA3AF;
+	font-style: italic;
+	text-align: center;
+}
+
+/* ==========================================================================
+   9. Responsive — mobile breakpoint (spec §5.3.2, §5.4.2, §5.6.2)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+
+	/* Horizontal menu collapses to hamburger by default; off-canvas takes over.
+	     Themes can override by hiding .wtm-menu--horizontal if they want. */
+	.wtm-menu--horizontal .wtm-menu__list--root {
+		flex-direction: column;
+		padding: 8px 0;
+	}
+
+	.wtm-menu--horizontal .wtm-menu__list--sub,
+	.wtm-menu--horizontal .wtm-menu__mega-panel {
+		position: static;
+		box-shadow: none;
+		border: none;
+		min-width: 0;
+		max-width: 100%;
+		padding: 0 0 0 12px;
+		display: none;
+	}
+
+	.wtm-menu--horizontal .wtm-menu__item.is-open > .wtm-menu__list--sub,
+	.wtm-menu--horizontal .wtm-menu__item.is-open > .wtm-menu__mega-panel {
+		display: block;
+	}
+
+	.wtm-menu--horizontal .wtm-menu__mega-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.wtm-menu__footer-grid {
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+
+	.wtm-menu__footer-title {
+		cursor: pointer;
+		position: relative;
+	}
+
+	.wtm-menu__footer-title::after {
+		content: "▾";
+		position: absolute;
+		right: 0;
+		transition: transform 0.2s ease;
+	}
+
+	.wtm-menu__footer-col.is-collapsed .wtm-menu__list--footer {
+		display: none;
+	}
+
+	.wtm-menu__footer-col.is-collapsed .wtm-menu__footer-title::after {
+		transform: rotate(-90deg);
+	}
+}
+
+/* ==========================================================================
+   10. Reduced motion — accessibility
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+	.wtm-menu *,
+	.wtm-menu *::before,
+	.wtm-menu *::after,
+	.wtm-offcanvas,
+	.wtm-offcanvas__overlay {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+	}
+}
+
+/* ==========================================================================
+   11. Screen-reader utilities
+   ========================================================================== */
+
+.screen-reader-text {
+	border: 0;
+	clip: rect(1px, 1px, 1px, 1px);
+	clip-path: inset(50%);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute !important;
+	width: 1px;
+	word-wrap: normal !important;
+}

@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.5
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,24 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.2.0 =
+* New: Rendu frontend complet — les menus wtm_menu s'affichent désormais côté visiteur (spec §2.4, §5). Quatre types de menus supportés : horizontal (méga menu), vertical (sidebar), off-canvas (mobile), footer (multi-colonnes).
+* New: Classe `Menu_Renderer` (src/Frontend/Menu_Renderer.php, ~800 lignes) — walker PHP pur qui parcourt l'arbre JSON `_wtm_config` et produit du HTML sémantique `<nav><ul>` pour les 6 types d'items (link, mega_container, column, widget, title, separator) et les 7 types de widgets (html, banner, product_grid, category_grid, mini_cart, search, custom_link).
+* New: Classe `Location_Interceptor` — hook `wp_nav_menu_args` (priority 20) qui remplace les locations de thème enregistrées (`wtm_primary`, `wtm_footer`, etc.) par le rendu WTM quand un menu est publié pour cette location (spec §7.5).
+* New: Classe `Dynamic_CSS` — compile un CSS unique à partir des réglages globaux (couleurs, typo, breakpoint) et des paramètres par menu, sauvegardé dans `uploads/wtm-cache/dynamic-{hash}.css` avec cache-busting (spec §2.4.3). Purge automatique sur `save_post_wtm_menu`, `wtm_settings_saved`, `wp_restore_post_revision`.
+* New: Classe `Shortcode` — `[wtm_menu id="123"]` ou `[wtm_menu location="primary"]` pour insérer un menu n'importe où (pages, articles, Elementor, etc.) (spec §2.8.2).
+* New: Assets frontend conditionnels — `Assets_Loader` remplace le stub v1.0.0 et n'enqueue CSS/JS que si un menu WTM est rendu sur la page (spec §2.6.1). Écoute l'action `wtm_rendered_location` déclenchée par le shortcode et l'interceptor.
+* New: Fichier `assets/front/wtm-frontend.css` (~15 Ko, base styles pour 4 types de menus + méga panel + widgets + responsive + reduced-motion).
+* New: Fichier `assets/front/wtm-frontend.js` (~5 Ko, vanilla JS sans jQuery) — gère off-canvas (open/close, overlay click, ESC, focus trap), click-trigger mega containers, accordion mobile, footer accordion, sync mini-cart WooCommerce.
+* New: 4 widgets WooCommerce rendus côté frontend : `product_grid` (grille de produits avec image/nom/prix/bouton "Ajouter" + transient cache 12h filtrable), `category_grid` (grille de catégories avec thumbnail), `mini_cart` (compteur + total synchronisé avec WC cart fragments), `search` (formulaire de recherche produits WC).
+* New: 3 widgets non-WC : `html` (wp_kses_post), `banner` (bloc CTA coloré), `custom_link` (bouton stylisé).
+* New: Hooks filters pour développeurs (spec §2.8.4) : `wtm_menu_config`, `wtm_render_item`, `wtm_menu_classes`, `wtm_dynamic_css`, `wtm_map_theme_location`, `wtm_product_grid_query`, `wtm_widget_cache_duration`, `wtm_force_enqueue_assets`.
+* New: Action `wtm_rendered_location` déclenchée à chaque rendu de menu (permet à des extensions tierces de tracker quels menus sont actifs).
+* New: Localisation FR du JS frontend via `wp_localize_script('wtmFrontend', ...)` avec breakpoint, mobileBehavior, i18n strings, ajaxUrl.
+* Update: Bootstrap.php instancie les 4 nouveaux services frontend (Dynamic_CSS, Menu_Renderer, Location_Interceptor, Shortcode) + Assets_Loader avec dépendance Dynamic_CSS. Ajoute hook `purge_dynamic_css` sur save_post_wtm_menu / wtm_settings_saved / wp_restore_post_revision.
+* Update: Bump version 1.1.5 → 1.2.0 (woo-total-menu.php, package.json, readme.txt)
+* Security: Tout le HTML rendu échappe les URLs (esc_url), labels (esc_html), couleurs (regex whitelist), HTML personnalisé (wp_kses_post). Le répertoire de cache contient un .htaccess + index.php qui bloquent l'exécution PHP directe.
 
 = 1.1.5 =
 * New: Historique des révisions WordPress — chaque sauvegarde crée désormais une révision du menu CPT (spec §6.6, §7.6). Le bouton "Historique" (icône dashicons-backup) dans le header ouvre un modal listant les révisions passées avec auteur, date relative, et nombre d'items.

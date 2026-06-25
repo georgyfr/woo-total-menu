@@ -28,8 +28,8 @@ Chaque fichier `vX.Y.Z.md` décrit :
 | [v1.1.3](./v1.1.3.md) | 2026-06-25 | ✅ Livrée | Fixes UX : indicateur drop temps réel + migration React 18 createRoot + annonce ARIA unique |
 | [v1.1.4](./v1.1.4.md) | 2026-06-25 | ✅ Livrée | Live preview via iframe + postMessage (debounce 250 ms, modes responsive desktop/tablet/mobile) |
 | [v1.1.5](./v1.1.5.md) | 2026-06-25 | ✅ Livrée | Historique des révisions WordPress — modal Historique, 3 routes REST, filtre `wtm_max_revisions`, prévisualisation de révision, restauration avec confirmation |
-| v1.2.x | à venir | 📋 Planifiée | Rendu frontend (Menu_Walker, méga menu, off-canvas mobile) |
-| v1.3.x | à venir | 📋 Planifiée | Widgets WooCommerce (catégories, produits, mini-panier) |
+| [v1.2.0](./v1.2.0.md) | 2026-06-25 | ✅ Livrée | Rendu frontend complet — Menu_Renderer, Location_Interceptor, Dynamic_CSS, Shortcode `[wtm_menu]`, assets frontend conditionnels, 4 widgets WooCommerce rendus côté visiteur |
+| v1.3.x | à venir | 📋 Planifiée | Widgets WooCommerce avancés (catégories, produits, mini-panier) |
 | v1.4.x | à venir | 📋 Planifiée | Header & Footer Builder |
 | v1.5.x | à venir | 📋 Planifiée | Système de templates (12+ templates intégrés) |
 | v1.6.x | à venir | 📋 Planifiée | Rôles, blocs Gutenberg, compatibilité Elementor/Bricks/Oxygen, multisite |

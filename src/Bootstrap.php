@@ -115,6 +115,19 @@ class Bootstrap {
                 // through the REST URL, not the admin dashboard).
                 $this->services['preview']     = new \WooTotalMenu\Frontend\Preview_Controller();
 
+                // v1.2.0 — Frontend rendering (spec §2.4, §5).
+                //   - Dynamic_CSS: per-site stylesheet cached to uploads/wtm-cache/.
+                //   - Menu_Renderer: walks JSON config → HTML.
+                //   - Location_Interceptor: replaces theme wp_nav_menu() calls.
+                //   - Shortcode: [wtm_menu id="…"] for arbitrary embeds.
+                //   - Assets_Loader: conditional CSS/JS enqueue.
+                // Instantiated on every request so that REST + AJAX + wp-admin all
+                // share the same hooks (preview iframe renders via REST too).
+                $this->services['dynamic_css']      = new \WooTotalMenu\Frontend\Dynamic_CSS();
+                $this->services['menu_renderer']    = new \WooTotalMenu\Frontend\Menu_Renderer();
+                $this->services['location_interceptor'] = new \WooTotalMenu\Frontend\Location_Interceptor( $this->services['menu_renderer'] );
+                $this->services['shortcode']        = new \WooTotalMenu\Frontend\Shortcode( $this->services['menu_renderer'] );
+
                 // Admin (only in wp-admin context).
                 if ( is_admin() ) {
                         $this->services['admin_menu']  = new \WooTotalMenu\Admin\Admin_Menu();
@@ -133,9 +146,11 @@ class Bootstrap {
                 // never triggered outside wp-admin, so they are harmless.
                 $this->services['meta_boxes']  = new \WooTotalMenu\Admin\Meta_Boxes();
 
-                // Frontend rendering.
+                // Frontend assets loader (replaces the v1.0.0 stub).
+                // Instantiated on every request so it can listen for the
+                // `wtm_rendered_location` action in REST/AJAX contexts too.
                 if ( ! is_admin() || wp_doing_ajax() ) {
-                        $this->services['assets_loader'] = new \WooTotalMenu\Frontend\Assets_Loader();
+                        $this->services['assets_loader'] = new \WooTotalMenu\Frontend\Assets_Loader( $this->services['dynamic_css'] );
                 }
         }
 
@@ -147,6 +162,25 @@ class Bootstrap {
         private function register_hooks() {
                 // Init action — used by subsystems to register their own hooks.
                 add_action( 'init', array( $this, 'on_init' ), 20 );
+
+                // v1.2.0 — Purge the dynamic CSS cache when a menu or settings change.
+                add_action( 'save_post_wtm_menu', array( $this, 'purge_dynamic_css' ) );
+                add_action( 'wtm_settings_saved', array( $this, 'purge_dynamic_css' ) );
+                // Also purge on revision restore (spec §7.6).
+                add_action( 'wp_restore_post_revision', array( $this, 'purge_dynamic_css' ) );
+        }
+
+        /**
+         * Purge the frontend dynamic CSS cache.
+         *
+         * Called on save_post_wtm_menu, wtm_settings_saved, wp_restore_post_revision.
+         *
+         * @return void
+         */
+        public function purge_dynamic_css() {
+                if ( isset( $this->services['dynamic_css'] ) ) {
+                        $this->services['dynamic_css']->purge();
+                }
         }
 
         /**

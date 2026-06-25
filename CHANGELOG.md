@@ -5,6 +5,132 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-06-25
+
+### Added
+
+- **Rendu frontend complet** (spec §2.4, §5, §7.5) : les menus `wtm_menu`
+  s'affichent désormais côté visiteur. Auparavant (v1.0.0 → v1.1.5), le plugin
+  ne faisait que *stocker* les configurations ; il pouvait uniquement les
+  prévisualiser dans le Builder via une iframe. À partir de la v1.2.0, le
+  rendu est production-ready pour les 4 types de menus : horizontal (méga
+  menu), vertical (sidebar), off-canvas (mobile), footer (multi-colonnes).
+
+- **Classe `Menu_Renderer`** (`src/Frontend/Menu_Renderer.php`, ~800 lignes) :
+  walker PHP pur qui parcourt l'arbre JSON `_wtm_config` et produit du HTML
+  sémantique `<nav><ul>` pour les 6 types d'items (`link`, `mega_container`,
+  `column`, `widget`, `title`, `separator`) et les 7 types de widgets
+  (`html`, `banner`, `product_grid`, `category_grid`, `mini_cart`, `search`,
+  `custom_link`). Quatre dispatchers par type de menu (`render_horizontal`,
+  `render_vertical`, `render_offcanvas`, `render_footer`) pour coller aux
+  maquettes spec §5.3 → §5.7. Tout le HTML échappé via `esc_url`, `esc_html`,
+  `esc_attr`, `wp_kses_post`.
+
+- **Classe `Location_Interceptor`** : hook `wp_nav_menu_args` (priority 20)
+  qui détecte les appels à `wp_nav_menu(['theme_location' => 'wtm_primary'])`
+  (ou n'importe quelle location WTM) et remplace le walker natif WordPress
+  par le rendu `Menu_Renderer`. Cache objet 5 min sur la résolution
+  `location → menu_id`. Hook de mapping `wtm_map_theme_location` pour
+  extension à des locations de thème personnalisées.
+
+- **Classe `Dynamic_CSS`** (spec §2.4.3) : compile un CSS unique à partir des
+  réglages globaux (`WTM_OPTION_SETTINGS` — couleurs, typo, breakpoint) et
+  des paramètres par menu (sticky, align, fullwidth_mega). Sauvegarde dans
+  `uploads/wtm-cache/dynamic-{hash}.css` où `hash` = md5 du contenu, utilisé
+  comme query string `?ver=` pour cache-busting. Régénéré automatiquement
+  sur `save_post_wtm_menu`, `wtm_settings_saved`, `wp_restore_post_revision`.
+  Répertoire protégé par `.htaccess` + `index.php` (pas d'exécution PHP
+  directe). Filter `wtm_dynamic_css` pour extensions.
+
+- **Classe `Shortcode`** (spec §2.8.2) : `[wtm_menu id="123"]` ou
+  `[wtm_menu location="primary"]` insère un menu n'importe où (pages,
+  articles, Elementor, blocs Gutenberg). Déclenche `wtm_rendered_location`
+  pour que `Assets_Loader` enqueuue les CSS/JS.
+
+- **Assets frontend conditionnels** : `Assets_Loader` remplace le stub
+  v1.0.0 et n'enqueue CSS/JS que si un menu WTM a effectivement été rendu
+  sur la page (via écoute de l'action `wtm_rendered_location`). Filter
+  `wtm_force_enqueue_assets` pour forcer le chargement (utile pour
+  shortcodes dans contenu AJAX).
+
+- **Fichier `assets/front/wtm-frontend.css`** (~15 Ko) : styles de base
+  pour les 4 types de menus + méga panel + sub-menus flyout + badges +
+  icônes + widgets (product cards, category cards, mini-cart, search,
+  banners) + responsive (mobile breakpoint 768px par défaut, footer
+  accordion en mobile) + `prefers-reduced-motion` + screen-reader-text.
+
+- **Fichier `assets/front/wtm-frontend.js`** (~5 Ko, vanilla JS, pas de
+  jQuery — spec §2.6.1) : gère
+  - Off-canvas : ouverture/fermeture, clic overlay, ESC, focus trap
+    (Tab/Shift+Tab cycle à l'intérieur du drawer).
+  - Click-trigger mega containers : sur mobile ou en mode `trigger=click`,
+    un clic bascule `is-open` sur le `.wtm-menu__item--mega`.
+  - Mobile accordion : sur mobile, un clic sur un item parent avec
+    `href="#"` bascule ses enfants visibles.
+  - Footer accordion : sur mobile, les titres de colonnes deviennent
+    cliquables pour replier/déplier la liste.
+  - Outside-click + Escape pour fermer les mega panels ouverts.
+  - WC mini-cart : écoute `wc_fragments_refreshed` et rejoue une animation
+    "bounce" sur le compteur.
+  - Localisation via `window.wtmFrontend` (breakpoint, i18n, ajaxUrl).
+
+- **4 widgets WooCommerce rendus côté frontend** :
+  - `product_grid` : grille de produits WC avec image, nom, prix, bouton
+    "Ajouter" (URL `add-to-cart`). Cache transient 12h filtrable via
+    `wtm_widget_cache_duration`. Ordres supportés : date, price-asc,
+    price-desc, popularity, rating. Filter `wtm_product_grid_query` pour
+    customiser la requête.
+  - `category_grid` : grille de catégories WC avec thumbnail (via
+    `get_term_meta('thumbnail_id')`).
+  - `mini_cart` : lien vers `/cart` avec compteur + total synchronisés via
+    WC cart fragments. Bounce animation sur update.
+  - `search` : formulaire de recherche produits WC (hidden input
+    `post_type=product`).
+
+- **3 widgets non-WC** : `html` (rendu via `wp_kses_post` — spec §7.10),
+  `banner` (bloc CTA coloré avec bg/color/url), `custom_link` (bouton
+  stylisé).
+
+- **8 hooks filters pour développeurs** (spec §2.8.4) :
+  - `wtm_menu_config` — filtre la config avant rendu
+  - `wtm_render_item` — court-circuit le rendu d'un item individuel
+  - `wtm_menu_classes` — filtre les classes CSS du `<nav>`
+  - `wtm_dynamic_css` — filtre le CSS généré
+  - `wtm_map_theme_location` — map des locations de thème custom
+  - `wtm_product_grid_query` — filtre la WP_Query du widget product_grid
+  - `wtm_widget_cache_duration` — filtre la durée du transient cache
+  - `wtm_force_enqueue_assets` — force le chargement des assets
+  - Action `wtm_rendered_location` — émise à chaque rendu de menu
+
+- **Localisation FR** du JS frontend via `wp_localize_script('wtmFrontend',
+  ...)` avec `breakpoint`, `mobileBehavior`, `i18n` (openMenu, closeMenu,
+  openSub, closeSub), `ajaxUrl`, `wooCartFragments`.
+
+### Changed
+
+- `Bootstrap.php` instancie les 4 nouveaux services frontend (Dynamic_CSS,
+  Menu_Renderer, Location_Interceptor, Shortcode) sur chaque requête (pas
+  seulement `is_admin()`) pour que REST + AJAX + wp-admin partagent les
+  mêmes hooks. `Assets_Loader` reçoit maintenant une dépendance
+  `Dynamic_CSS` injectée. Nouveau hook `purge_dynamic_css` sur
+  `save_post_wtm_menu`, `wtm_settings_saved`, `wp_restore_post_revision`.
+
+- Bump version 1.1.5 → 1.2.0 dans `woo-total-menu.php` (header + constante
+  `WTM_VERSION`), `package.json`, `readme.txt` (Stable tag + nouvelle
+  section Changelog).
+
+### Security
+
+- Tout le HTML rendu échappe les URLs (`esc_url`), labels (`esc_html`),
+  attributs (`esc_attr`), couleurs (regex whitelist hex/rgb), HTML
+  personnalisé (`wp_kses_post`).
+- Le répertoire de cache `uploads/wtm-cache/` contient un `.htaccess`
+  (`Options -Indexes` + `Deny from all` sur `*.php`) et un `index.php`
+  vide — empêche l'exécution PHP directe et le listage de répertoire.
+- Les widgets WC utilisent les fonctions API WooCommerce standard
+  (`wc_get_product`, `wc_get_cart_url`, `WC()->cart`) — pas de requêtes
+  SQL brutes.
+
 ## [1.1.5] - 2026-06-25
 
 ### Added
