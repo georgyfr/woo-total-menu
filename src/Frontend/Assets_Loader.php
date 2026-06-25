@@ -14,7 +14,7 @@
 namespace WooTotalMenu\Frontend;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+        exit;
 }
 
 /**
@@ -29,115 +29,127 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Assets_Loader {
 
-	/**
-	 * Dynamic_CSS instance (injected).
-	 *
-	 * @var Dynamic_CSS
-	 */
-	private $dynamic_css;
+        /**
+         * Dynamic_CSS instance (injected).
+         *
+         * @var Dynamic_CSS
+         */
+        private $dynamic_css;
 
-	/**
-	 * Whether at least one WTM menu was rendered on this request.
-	 *
-	 * @var bool
-	 */
-	private $has_rendered_menu = false;
+        /**
+         * Whether at least one WTM menu was rendered on this request.
+         *
+         * @var bool
+         */
+        private $has_rendered_menu = false;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param Dynamic_CSS $dynamic_css Dynamic CSS generator.
-	 */
-	public function __construct( Dynamic_CSS $dynamic_css ) {
-		$this->dynamic_css = $dynamic_css;
+        /**
+         * Constructor.
+         *
+         * @param Dynamic_CSS $dynamic_css Dynamic CSS generator.
+         */
+        public function __construct( Dynamic_CSS $dynamic_css ) {
+                $this->dynamic_css = $dynamic_css;
 
-		// Listen for menus being rendered (via shortcode or location interceptor).
-		add_action( 'wtm_rendered_location', array( $this, 'mark_rendered' ), 10, 2 );
+                // Listen for menus being rendered (via shortcode or location interceptor).
+                add_action( 'wtm_rendered_location', array( $this, 'mark_rendered' ), 10, 2 );
 
-		// Enqueue assets — late, after we know whether a menu was rendered.
-		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue' ), 100 );
-	}
+                // Enqueue assets — late, after we know whether a menu was rendered.
+                add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue' ), 100 );
+        }
 
-	/**
-	 * Mark that a menu was rendered on this request.
-	 *
-	 * @param int    $menu_id  Menu post ID.
-	 * @param string $location Location slug.
-	 * @return void
-	 */
-	public function mark_rendered( $menu_id, $location ) {
-		$this->has_rendered_menu = true;
-	}
+        /**
+         * Mark that a menu was rendered on this request.
+         *
+         * @param int    $menu_id  Menu post ID.
+         * @param string $location Location slug.
+         * @return void
+         */
+        public function mark_rendered( $menu_id, $location ) {
+                $this->has_rendered_menu = true;
+        }
 
-	/**
-	 * Enqueue frontend assets if a WTM menu is active on the page.
-	 *
-	 * @return void
-	 */
-	public function maybe_enqueue() {
-		/**
-		 * Allow forcing asset loading even when no menu was rendered
-		 * (useful for shortcodes in AJAX-loaded content).
-		 *
-		 * @since 1.2.0
-		 *
-		 * @param bool $force Whether to force enqueue.
-		 */
-		$force = (bool) apply_filters( 'wtm_force_enqueue_assets', false );
+        /**
+         * Enqueue frontend assets if a WTM menu is active on the page.
+         *
+         * @return void
+         */
+        public function maybe_enqueue() {
+                /**
+                 * Allow forcing asset loading even when no menu was rendered
+                 * (useful for shortcodes in AJAX-loaded content).
+                 *
+                 * @since 1.2.0
+                 *
+                 * @param bool $force Whether to force enqueue.
+                 */
+                $force = (bool) apply_filters( 'wtm_force_enqueue_assets', false );
 
-		if ( ! $this->has_rendered_menu && ! $force ) {
-			return;
-		}
+                if ( ! $this->has_rendered_menu && ! $force ) {
+                        return;
+                }
 
-		// 1. Dynamic CSS (per-site, regenerated on settings/menu save).
-		$dynamic_url = $this->dynamic_css->get_url();
-		if ( $dynamic_url ) {
-			wp_enqueue_style(
-				'wtm-dynamic',
-				$dynamic_url,
-				array(),
-				null // Cache-busting hash already in URL.
-			);
-		}
+                // 1. Dynamic CSS (per-site, regenerated on settings/menu save).
+                $dynamic_url = $this->dynamic_css->get_url();
+                if ( $dynamic_url ) {
+                        wp_enqueue_style(
+                                'wtm-dynamic',
+                                $dynamic_url,
+                                array(),
+                                null // Cache-busting hash already in URL.
+                        );
+                }
 
-		// 2. Base frontend CSS.
-		wp_enqueue_style(
-			'wtm-frontend',
-			WTM_PLUGIN_URL . 'assets/front/wtm-frontend.css',
-			array( 'wtm-dynamic' ),
-			WTM_VERSION
-		);
+                // 2. Base frontend CSS.
+                wp_enqueue_style(
+                        'wtm-frontend',
+                        WTM_PLUGIN_URL . 'assets/front/wtm-frontend.css',
+                        array( 'wtm-dynamic' ),
+                        WTM_VERSION
+                );
 
-		// 3. Frontend JS (vanilla, no jQuery — spec §2.6.1).
-		wp_enqueue_script(
-			'wtm-frontend',
-			WTM_PLUGIN_URL . 'assets/front/wtm-frontend.js',
-			array(),
-			WTM_VERSION,
-			true // In footer.
-		);
+                // 3. Frontend JS (vanilla, no jQuery — spec §2.6.1).
+                wp_enqueue_script(
+                        'wtm-frontend',
+                        WTM_PLUGIN_URL . 'assets/front/wtm-frontend.js',
+                        array(),
+                        WTM_VERSION,
+                        true // In footer.
+                );
 
-		// Localize script with breakpoint + i18n strings.
-		$settings    = get_option( WTM_OPTION_SETTINGS );
-		$responsive  = is_array( $settings ) ? ( $settings['responsive'] ?? array() ) : array();
-		$breakpoint  = (int) ( $responsive['mobile_breakpoint'] ?? 768 );
-		$mobile_bhvr = $responsive['mobile_behavior'] ?? 'offcanvas';
+                // Localize script with breakpoint + i18n strings.
+                $settings    = get_option( WTM_OPTION_SETTINGS );
+                $responsive  = is_array( $settings ) ? ( $settings['responsive'] ?? array() ) : array();
+                $breakpoint  = (int) ( $responsive['mobile_breakpoint'] ?? 768 );
+                $mobile_bhvr = $responsive['mobile_behavior'] ?? 'offcanvas';
 
-		wp_localize_script(
-			'wtm-frontend',
-			'wtmFrontend',
-			array(
-				'breakpoint'       => $breakpoint,
-				'mobileBehavior'   => $mobile_bhvr,
-				'i18n'             => array(
-					'openMenu'  => __( 'Ouvrir le menu', 'woo-total-menu' ),
-					'closeMenu' => __( 'Fermer le menu', 'woo-total-menu' ),
-					'openSub'   => __( 'Ouvrir le sous-menu', 'woo-total-menu' ),
-					'closeSub'  => __( 'Fermer le sous-menu', 'woo-total-menu' ),
-				),
-				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'wooCartFragments' => class_exists( 'WooCommerce' ) ? 'yes' : 'no',
-			)
-		);
-	}
+                wp_localize_script(
+                        'wtm-frontend',
+                        'wtmFrontend',
+                        array(
+                                'breakpoint'       => $breakpoint,
+                                'mobileBehavior'   => $mobile_bhvr,
+                                'i18n'             => array(
+                                        'openMenu'     => __( 'Ouvrir le menu', 'woo-total-menu' ),
+                                        'closeMenu'    => __( 'Fermer le menu', 'woo-total-menu' ),
+                                        'openSub'      => __( 'Ouvrir le sous-menu', 'woo-total-menu' ),
+                                        'closeSub'     => __( 'Fermer le sous-menu', 'woo-total-menu' ),
+                                        'openCart'     => __( 'Ouvrir le panier', 'woo-total-menu' ),
+                                        'closeCart'    => __( 'Fermer le panier', 'woo-total-menu' ),
+                                        'cartEmpty'    => __( 'Votre panier est vide.', 'woo-total-menu' ),
+                                        'viewCart'     => __( 'Voir le panier', 'woo-total-menu' ),
+                                        'checkout'     => __( 'Commander', 'woo-total-menu' ),
+                                        'noResults'    => __( 'Aucun produit trouvé.', 'woo-total-menu' ),
+                                        'searching'    => __( 'Recherche…', 'woo-total-menu' ),
+                                        'subscribing'  => __( 'Inscription…', 'woo-total-menu' ),
+                                        'invalidEmail' => __( 'Adresse email invalide.', 'woo-total-menu' ),
+                                ),
+                                'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+                                'restUrl'          => esc_url_raw( rest_url( WTM_REST_NAMESPACE ) ),
+                                'restNonce'        => wp_create_nonce( 'wp_rest' ),
+                                'newsletterNonce'  => wp_create_nonce( 'wtm_newsletter' ),
+                                'wooCartFragments' => class_exists( 'WooCommerce' ) ? 'yes' : 'no',
+                        )
+                );
+        }
 }

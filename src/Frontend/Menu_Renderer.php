@@ -631,7 +631,10 @@ class Menu_Renderer {
          */
         private function render_widget( array $item, $depth ) {
                 $widget_type = $item['widget_type'] ?? 'html';
-                $settings    = is_array( $item['settings'] ?? null ) ? $item['settings'] : array();
+                // v1.2.0 used `$item['settings']`, but the schema (and Builder JS)
+                // store widget config under `widget_settings`. Accept both for
+                // backward compatibility with any persisted config.
+                $settings    = is_array( $item['widget_settings'] ?? null ) ? $item['widget_settings'] : ( is_array( $item['settings'] ?? null ) ? $item['settings'] : array() );
                 $label       = $item['label'] ?? '';
                 $classes     = $this->item_classes( $item, $depth );
                 $classes[]   = 'wtm-menu__widget';
@@ -914,6 +917,9 @@ class Menu_Renderer {
         /**
          * Mini-cart widget — link to cart page with item count + total.
          *
+         * v1.3.0: adds `display_mode: 'drawer'` option — renders a button that
+         * opens an AJAX side drawer with cart contents (spec §5.10 — micro-interactions).
+         *
          * @param array  $settings Widget settings.
          * @param string $label    Widget label.
          * @return string
@@ -927,6 +933,7 @@ class Menu_Renderer {
                 $total = WC()->cart ? WC()->cart->get_cart_total() : '';
                 $url   = esc_url( wc_get_cart_url() );
                 $lbl   = $label ? esc_html( $label ) : esc_html__( 'Panier', 'woo-total-menu' );
+                $mode  = $settings['display_mode'] ?? 'link';
 
                 $count_html = sprintf(
                         '<span class="wtm-mini-cart__count" data-wtm-cart-count>%d</span>',
@@ -935,6 +942,19 @@ class Menu_Renderer {
 
                 $total_html = $total ? sprintf( '<span class="wtm-mini-cart__total" data-wtm-cart-total>%s</span>', wp_kses_post( $total ) ) : '';
 
+                // v1.3.0 — drawer mode: render as a button that opens an AJAX drawer.
+                if ( 'drawer' === $mode ) {
+                        $position = $settings['drawer_position'] ?? 'right';
+                        return sprintf(
+                                '<button type="button" class="wtm-mini-cart wtm-mini-cart--drawer" data-wtm-cart-drawer data-position="%s" aria-haspopup="dialog" aria-expanded="false"><span class="wtm-mini-cart__icon" aria-hidden="true"></span><span class="wtm-mini-cart__label">%s</span>%s%s</button>',
+                                esc_attr( $position ),
+                                $lbl,
+                                $count_html,
+                                $total_html
+                        );
+                }
+
+                // Default: link to cart page.
                 return sprintf(
                         '<a href="%s" class="wtm-mini-cart" data-wtm-mini-cart><span class="wtm-mini-cart__icon" aria-hidden="true"></span><span class="wtm-mini-cart__label">%s</span>%s%s</a>',
                         $url,
@@ -947,19 +967,28 @@ class Menu_Renderer {
         /**
          * Search widget — WC product search form.
          *
+         * v1.3.0: adds `live_suggestions: true` — input gets data attributes
+         * consumed by wtm-frontend.js to fetch product suggestions via REST.
+         *
          * @param array  $settings Widget settings (placeholder).
          * @param string $label    Widget label.
          * @return string
          */
         private function render_widget_search( array $settings, $label ) {
                 $placeholder = ! empty( $settings['placeholder'] ) ? $settings['placeholder'] : __( 'Rechercher un produit…', 'woo-total-menu' );
+                $live        = ! empty( $settings['live_suggestions'] );
+                $min_chars   = max( 2, min( 5, (int) ( $settings['min_chars'] ?? 3 ) ) );
 
                 if ( class_exists( 'WooCommerce' ) ) {
-                        $form = '<form role="search" method="get" class="wtm-search" action="' . esc_url( home_url( '/' ) ) . '">';
+                        $form = '<form role="search" method="get" class="wtm-search' . ( $live ? ' wtm-search--live' : '' ) . '" action="' . esc_url( home_url( '/' ) ) . '">';
                         $form .= '<label class="screen-reader-text" for="wtm-search-' . esc_attr( sanitize_key( $placeholder ) ) . '">' . esc_html__( 'Recherche :', 'woo-total-menu' ) . '</label>';
-                        $form .= '<input type="search" class="wtm-search__input" placeholder="' . esc_attr( $placeholder ) . '" value="' . esc_attr( get_search_query() ) . '" name="s" />';
+                        $input_attrs = $live ? ' data-wtm-live-search data-min-chars="' . (int) $min_chars . '"' : '';
+                        $form .= '<input type="search" class="wtm-search__input" placeholder="' . esc_attr( $placeholder ) . '" value="' . esc_attr( get_search_query() ) . '" name="s"' . $input_attrs . ' />';
                         $form .= '<input type="hidden" name="post_type" value="product" />';
                         $form .= '<button type="submit" class="wtm-search__btn" aria-label="' . esc_attr__( 'Rechercher', 'woo-total-menu' ) . '"><span aria-hidden="true"></span></button>';
+                        if ( $live ) {
+                                $form .= '<div class="wtm-search__suggestions" data-wtm-suggestions role="listbox" aria-label="' . esc_attr__( 'Suggestions de produits', 'woo-total-menu' ) . '"></div>';
+                        }
                         $form .= '</form>';
                         return $form;
                 }
@@ -982,6 +1011,327 @@ class Menu_Renderer {
                 $color = $this->sanitize_color( $settings['color'] ?? '#FFFFFF' );
                 $style = 'background:' . esc_attr( $bg ) . ';color:' . esc_attr( $color ) . ';';
                 return sprintf( '<a href="%s" class="wtm-custom-link" style="%s">%s</a>', $url, $style, $text );
+        }
+
+        /**
+         * Recent posts widget — WordPress posts grid (spec §5.9.4 / §3.5).
+         *
+         * Uses transient cache (filterable via `wtm_widget_cache_duration`).
+         *
+         * @since 1.3.0
+         *
+         * @param array  $settings Widget settings.
+         * @param string $label    Widget label.
+         * @return string
+         */
+        private function render_widget_recent_posts( array $settings, $label ) {
+                $limit        = max( 1, min( 12, (int) ( $settings['limit'] ?? 4 ) ) );
+                $cols         = max( 1, min( 4, (int) ( $settings['columns'] ?? 2 ) ) );
+                $show_image   = ! empty( $settings['show_image'] );
+                $show_date    = ! empty( $settings['show_date'] );
+                $show_excerpt = ! empty( $settings['show_excerpt'] );
+                $orderby      = $settings['orderby'] ?? 'date';
+                $category     = isset( $settings['category'] ) && '' !== $settings['category'] ? (int) $settings['category'] : 0;
+
+                $cache_key = 'wtm_w_posts_' . md5( wp_json_encode( $settings ) );
+                $cached    = get_transient( $cache_key );
+                if ( false !== $cached ) {
+                        return $cached;
+                }
+
+                $query_args = array(
+                        'post_type'           => 'post',
+                        'post_status'         => 'publish',
+                        'posts_per_page'      => $limit,
+                        'ignore_sticky_posts' => true,
+                        'orderby'             => $orderby,
+                        'order'               => 'DESC',
+                );
+                if ( $category ) {
+                        $query_args['cat'] = $category;
+                }
+                if ( 'title' === $orderby ) {
+                        $query_args['order'] = 'ASC';
+                } elseif ( 'rand' === $orderby ) {
+                        $query_args['orderby'] = 'rand';
+                }
+
+                $q = new \WP_Query( $query_args );
+
+                if ( ! $q->have_posts() ) {
+                        $out = '<div class="wtm-widget-empty">' . esc_html__( 'Aucun article.', 'woo-total-menu' ) . '</div>';
+                        $ttl = (int) apply_filters( 'wtm_widget_cache_duration', 12 * HOUR_IN_SECONDS, 'recent_posts' );
+                        set_transient( $cache_key, $out, $ttl );
+                        return $out;
+                }
+
+                $cards = array();
+                while ( $q->have_posts() ) {
+                        $q->the_post();
+                        $cards[] = $this->render_post_card( get_the_ID(), $show_image, $show_date, $show_excerpt );
+                }
+                wp_reset_postdata();
+
+                $out = sprintf(
+                        '<div class="wtm-recent-posts" style="--wtm-rp-cols:%d">%s</div>',
+                        (int) $cols,
+                        implode( '', $cards )
+                );
+
+                $ttl = (int) apply_filters( 'wtm_widget_cache_duration', 12 * HOUR_IN_SECONDS, 'recent_posts' );
+                set_transient( $cache_key, $out, $ttl );
+
+                return $out;
+        }
+
+        /**
+         * Render a single post card for recent_posts widget.
+         *
+         * @since 1.3.0
+         *
+         * @param int  $post_id      Post ID.
+         * @param bool $show_image   Whether to show the thumbnail.
+         * @param bool $show_date    Whether to show the date.
+         * @param bool $show_excerpt Whether to show the excerpt.
+         * @return string
+         */
+        private function render_post_card( $post_id, $show_image, $show_date, $show_excerpt ) {
+                $permalink = esc_url( get_permalink( $post_id ) );
+                $title     = esc_html( get_the_title( $post_id ) );
+
+                $thumb = '';
+                if ( $show_image && has_post_thumbnail( $post_id ) ) {
+                        $thumb = get_the_post_thumbnail( $post_id, 'thumbnail', array( 'class' => 'wtm-post-card__img' ) );
+                } elseif ( $show_image ) {
+                        $thumb = '<span class="wtm-post-card__img wtm-post-card__img--placeholder"></span>';
+                }
+
+                $date_html = '';
+                if ( $show_date ) {
+                        $date_html = sprintf( '<time class="wtm-post-card__date" datetime="%s">%s</time>',
+                                esc_attr( get_the_date( 'c', $post_id ) ),
+                                esc_html( get_the_date( '', $post_id ) )
+                        );
+                }
+
+                $excerpt_html = '';
+                if ( $show_excerpt ) {
+                        $excerpt = wp_trim_words( get_the_excerpt( $post_id ), 12, '…' );
+                        $excerpt_html = sprintf( '<p class="wtm-post-card__excerpt">%s</p>', esc_html( $excerpt ) );
+                }
+
+                $media_html = $thumb ? sprintf( '<a href="%s" class="wtm-post-card__media">%s</a>', $permalink, $thumb ) : '';
+
+                return sprintf(
+                        '<article class="wtm-post-card">%s<div class="wtm-post-card__body"><a href="%s" class="wtm-post-card__title">%s</a>%s%s</div></article>',
+                        $media_html,
+                        $permalink,
+                        $title,
+                        $date_html,
+                        $excerpt_html
+                );
+        }
+
+        /**
+         * Social icons widget — list of social network links (spec §3.5, §5.7).
+         *
+         * @since 1.3.0
+         *
+         * @param array  $settings Widget settings.
+         * @param string $label    Widget label.
+         * @return string
+         */
+        private function render_widget_social_icons( array $settings, $label ) {
+                $items = $settings['items'] ?? array();
+                $size  = max( 12, min( 64, (int) ( $settings['size'] ?? 24 ) ) );
+
+                if ( ! is_array( $items ) || empty( $items ) ) {
+                        return '<div class="wtm-widget-empty">' . esc_html__( 'Aucun réseau social configuré.', 'woo-total-menu' ) . '</div>';
+                }
+
+                $links = array();
+                foreach ( $items as $soc ) {
+                        if ( ! is_array( $soc ) || empty( $soc['network'] ) || empty( $soc['url'] ) ) {
+                                continue;
+                        }
+                        $network = sanitize_html_class( $soc['network'] );
+                        $url     = esc_url( $soc['url'] );
+                        $lbl     = isset( $soc['label'] ) ? esc_html( $soc['label'] ) : ucfirst( $network );
+
+                        $links[] = sprintf(
+                                '<a href="%s" class="wtm-social-icon wtm-social-icon--%s" target="_blank" rel="noopener noreferrer" aria-label="%s" title="%s"><span class="wtm-social-icon__glyph" aria-hidden="true"></span></a>',
+                                $url,
+                                $network,
+                                /* translators: %s network name */
+                                esc_attr( sprintf( __( 'Visiter notre page %s', 'woo-total-menu' ), $lbl ) ),
+                                esc_attr( $lbl )
+                        );
+                }
+
+                if ( empty( $links ) ) {
+                        return '<div class="wtm-widget-empty">' . esc_html__( 'Aucun réseau social configuré.', 'woo-total-menu' ) . '</div>';
+                }
+
+                return sprintf(
+                        '<ul class="wtm-social-icons" style="--wtm-social-size:%dpx">%s</ul>',
+                        (int) $size,
+                        implode( '', array_map( function ( $l ) { return '<li class="wtm-social-icons__item">' . $l . '</li>'; }, $links ) )
+                );
+        }
+
+        /**
+         * Newsletter widget — email subscription form (spec §5.7, §3.5).
+         *
+         * Renders a form whose submission is handled by wtm-frontend.js via
+         * admin-ajax (action=wtm_newsletter_subscribe). The provider is
+         * configurable: "internal" stores emails in `wtm_newsletter_subscribers`
+         * option, "mailchimp" defers to a configured endpoint, "none" just
+         * shows the success message client-side.
+         *
+         * @since 1.3.0
+         *
+         * @param array  $settings Widget settings.
+         * @param string $label    Widget label.
+         * @return string
+         */
+        private function render_widget_newsletter( array $settings, $label ) {
+                $placeholder = ! empty( $settings['placeholder'] ) ? $settings['placeholder'] : __( 'Votre adresse email…', 'woo-total-menu' );
+                $btn_label   = ! empty( $settings['button_label'] ) ? $settings['button_label'] : __( 'S\'abonner', 'woo-total-menu' );
+                $provider    = $settings['provider'] ?? 'internal';
+                $list_id     = $settings['list_id'] ?? '';
+                $success     = ! empty( $settings['success_message'] ) ? $settings['success_message'] : __( 'Merci ! Votre inscription a bien été prise en compte.', 'woo-total-menu' );
+                $layout      = $settings['layout'] ?? 'inline';
+
+                $heading = $label ? sprintf( '<div class="wtm-newsletter__heading">%s</div>', esc_html( $label ) ) : '';
+
+                $nonce = wp_create_nonce( 'wtm_newsletter' );
+
+                $form = sprintf(
+                        '<form class="wtm-newsletter wtm-newsletter--%s" data-wtm-newsletter data-provider="%s" data-list-id="%s" data-nonce="%s"><div class="wtm-newsletter__fields"><label class="screen-reader-text" for="wtm-newsletter-email-%s">%s</label><input type="email" id="wtm-newsletter-email-%s" name="email" class="wtm-newsletter__email" placeholder="%s" required /><button type="submit" class="wtm-newsletter__btn">%s</button></div><p class="wtm-newsletter__message" data-wtm-newsletter-message hidden></p><script type="application/json" data-wtm-newsletter-config>%s</script></form>',
+                        esc_attr( $layout ),
+                        esc_attr( $provider ),
+                        esc_attr( $list_id ),
+                        esc_attr( $nonce ),
+                        esc_attr( uniqid( 'n' ) ),
+                        esc_html__( 'Adresse email', 'woo-total-menu' ),
+                        esc_attr( uniqid( 'n' ) ),
+                        esc_attr( $placeholder ),
+                        esc_html( $btn_label ),
+                        wp_json_encode( array( 'success' => $success ) )
+                );
+
+                return $heading . $form;
+        }
+
+        /**
+         * Filters widget — WooCommerce layered nav filters (spec §3.5, §5.5).
+         *
+         * Renders a form that links to the shop page with the appropriate
+         * query parameters (/?product_cat=…&min_price=…&max_price=…).
+         *
+         * @since 1.3.0
+         *
+         * @param array  $settings Widget settings.
+         * @param string $label    Widget label.
+         * @return string
+         */
+        private function render_widget_filters( array $settings, $label ) {
+                if ( ! class_exists( 'WooCommerce' ) ) {
+                        return '<div class="wtm-widget-empty">' . esc_html__( 'WooCommerce requis.', 'woo-total-menu' ) . '</div>';
+                }
+
+                $show_cats   = isset( $settings['show_categories'] ) ? (bool) $settings['show_categories'] : true;
+                $show_price  = isset( $settings['show_price'] ) ? (bool) $settings['show_price'] : false;
+                $show_attrs  = isset( $settings['show_attributes'] ) ? (bool) $settings['show_attributes'] : false;
+                $attrs       = is_array( $settings['attributes'] ?? null ) ? $settings['attributes'] : array();
+                $shop_url    = esc_url( wc_get_page_permalink( 'shop' ) );
+
+                $sections = array();
+
+                // Categories filter.
+                if ( $show_cats ) {
+                        $cats = get_terms( array(
+                                'taxonomy'   => 'product_cat',
+                                'hide_empty' => true,
+                                'number'     => 12,
+                                'orderby'    => 'count',
+                                'order'      => 'DESC',
+                        ) );
+                        if ( ! is_wp_error( $cats ) && ! empty( $cats ) ) {
+                                $options = '';
+                                foreach ( $cats as $cat ) {
+                                        $options .= sprintf(
+                                                '<option value="%s">%s (%d)</option>',
+                                                esc_attr( $cat->slug ),
+                                                esc_html( $cat->name ),
+                                                (int) $cat->count
+                                        );
+                                }
+                                $sections[] = sprintf(
+                                        '<div class="wtm-filters__group"><h4 class="wtm-filters__title">%s</h4><select name="product_cat" class="wtm-filters__select" data-wtm-filter="product_cat"><option value="">%s</option>%s</select></div>',
+                                        esc_html__( 'Catégories', 'woo-total-menu' ),
+                                        esc_html__( 'Toutes les catégories', 'woo-total-menu' ),
+                                        $options
+                                );
+                        }
+                }
+
+                // Price filter.
+                if ( $show_price ) {
+                        $sections[] = sprintf(
+                                '<div class="wtm-filters__group"><h4 class="wtm-filters__title">%s</h4><div class="wtm-filters__price"><input type="number" name="min_price" class="wtm-filters__price-min" placeholder="%s" min="0" step="0.01" data-wtm-filter="min_price" /><span class="wtm-filters__price-sep">—</span><input type="number" name="max_price" class="wtm-filters__price-max" placeholder="%s" min="0" step="0.01" data-wtm-filter="max_price" /></div></div>',
+                                esc_html__( 'Prix', 'woo-total-menu' ),
+                                esc_attr_x( 'Min', 'price filter min placeholder', 'woo-total-menu' ),
+                                esc_attr_x( 'Max', 'price filter max placeholder', 'woo-total-menu' )
+                        );
+                }
+
+                // Attribute filters.
+                if ( $show_attrs && ! empty( $attrs ) ) {
+                        foreach ( $attrs as $attr_slug ) {
+                                $attr_slug = sanitize_title( $attr_slug );
+                                if ( empty( $attr_slug ) ) {
+                                        continue;
+                                }
+                                $tax   = 'pa_' . $attr_slug;
+                                $terms = get_terms( array( 'taxonomy' => $tax, 'hide_empty' => true, 'number' => 12 ) );
+                                if ( is_wp_error( $terms ) || empty( $terms ) ) {
+                                        continue;
+                                }
+                                $label_attr = wc_attribute_label( $tax );
+                                $checks = '';
+                                foreach ( $terms as $term ) {
+                                        $id = uniqid( 'f_' );
+                                        $checks .= sprintf(
+                                                '<label class="wtm-filters__check"><input type="checkbox" name="filter_%s[]" value="%s" data-wtm-filter="filter_%s" /><span>%s</span></label>',
+                                                esc_attr( $attr_slug ),
+                                                esc_attr( $term->slug ),
+                                                esc_attr( $attr_slug ),
+                                                esc_html( $term->name )
+                                        );
+                                }
+                                $sections[] = sprintf(
+                                        '<div class="wtm-filters__group"><h4 class="wtm-filters__title">%s</h4><div class="wtm-filters__checks">%s</div></div>',
+                                        esc_html( $label_attr ),
+                                        $checks
+                                );
+                        }
+                }
+
+                if ( empty( $sections ) ) {
+                        return '<div class="wtm-widget-empty">' . esc_html__( 'Aucun filtre disponible.', 'woo-total-menu' ) . '</div>';
+                }
+
+                $heading = $label ? sprintf( '<div class="wtm-filters__heading">%s</div>', esc_html( $label ) ) : '';
+
+                return sprintf(
+                        '<form class="wtm-filters" method="get" action="%s" data-wtm-filters>%s%s<div class="wtm-filters__actions"><button type="submit" class="wtm-filters__btn">%s</button><button type="reset" class="wtm-filters__reset">%s</button></div></form>',
+                        $shop_url,
+                        $heading,
+                        implode( '', $sections ),
+                        esc_html__( 'Filtrer', 'woo-total-menu' ),
+                        esc_html__( 'Réinitialiser', 'woo-total-menu' )
+                );
         }
 
         // =========================================================================

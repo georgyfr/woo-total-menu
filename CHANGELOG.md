@@ -5,6 +5,174 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-06-25
+
+### Added
+
+- **4 nouveaux widgets WooCommerce avancés** (spec §3.5, §5.7, §5.9) :
+  - `recent_posts` — articles WordPress en grille (image, titre, date,
+    extrait) avec tri (date, title, comment_count, rand), catégorie
+    optionnelle, et transient cache filtrable via `wtm_widget_cache_duration`.
+  - `social_icons` — icônes réseaux sociaux avec glyphes SVG inline
+    (CSS mask) pour 7 réseaux prédéfinis (Facebook, Twitter/X, Instagram,
+    LinkedIn, YouTube, Pinterest, GitHub) + couleurs hover par réseau.
+    Taille configurable 12-64 px.
+  - `newsletter` — formulaire d'abonnement email avec layout inline/stacked,
+    providers `internal`/`mailchimp`/`none`, message de succès personnalisable.
+    Submit via admin-ajax (action `wtm_newsletter_subscribe`) avec nonce.
+  - `filters` — filtres WooCommerce layered nav (catégories en select,
+    range de prix min/max, attributs en checkboxes multiples). Soumet
+    vers la page Shop avec les query params WC standard.
+
+- **Widget `mini_cart` upgraded — mode drawer** : nouveau `display_mode:
+  'drawer'` qui rend un `<button data-wtm-cart-drawer>` au lieu d'un lien.
+  Au clic, le JS frontend ouvre un panneau latéral fixe (right ou left,
+  configurable) qui fetch le contenu du panier via la route REST
+  `/wtm/v1/mini-cart-contents` et affiche : items (image, nom, quantité,
+  prix), total, et boutons "Voir le panier" + "Commander". Refresh
+  automatique quand les WC cart fragments sont mis à jour.
+
+- **Widget `search` upgraded — suggestions live AJAX** : nouvelle option
+  `live_suggestions: true` qui attache un listener sur l'input et, après
+  debounce 250 ms, fetch la route REST `/wtm/v1/search-suggest?s=…` et
+  affiche un dropdown avec jusqu'à 5 produits (image thumbnail, titre,
+  price_html, badge "Promo" si `on_sale`). Navigation clavier complète
+  (ArrowDown/ArrowUp/Escape) + role="listbox".
+
+- **2 routes REST publiques** :
+  - `GET /wtm/v1/search-suggest?s=<query>&limit=5` — recherche produits
+    par relevance via `wc_get_products()`. Retourne `{ query, count,
+    products: [{id, title, permalink, price_html, thumbnail, on_sale}] }`.
+    Filter `wtm_search_suggest_query`.
+  - `GET /wtm/v1/mini-cart-contents` — calcule les totaux via
+    `WC()->cart->calculate_totals()` et retourne `{ count, total, subtotal,
+    items: [{key, product_id, name, permalink, thumbnail, quantity,
+    price_html}], cart_url, checkout_url, is_empty }`.
+
+- **1 admin-ajax handler** — `action=wtm_newsletter_subscribe` (double
+  hook `wp_ajax_*` + `wp_ajax_nopriv_*` pour visiteurs non connectés) :
+  vérifie le nonce `wtm_newsletter`, valide l'email via `is_email()`,
+  stocke dans l'option `wtm_newsletter_subscribers` (array d'entrées
+  `{email, list_id, subscribed, ip}`) avec déduplication. L'IP est
+  anonymisée (dernier octet IPv4 à 0, IPv6 tronquée à /64) pour
+  conformité GDPR.
+
+- **`WIDGET_SUBTYPES` picker dans AddItemButton.js** : quand l'utilisateur
+  choisit "Widget" dans le dropdown d'ajout d'item, un panneau secondaire
+  s'ouvre avec les 12 sous-types de widgets (html, banner, custom_link,
+  product_grid, category_grid, mini_cart, search, recent_posts,
+  social_icons, newsletter, filters, title), chacun avec icône dashicon
+  + description courte + defaults spécifiques au type. L'utilisateur
+  n'a plus à changer le widget_type manuellement après ajout.
+
+- **Inspecteurs PropertiesPanel.js pour les 7 nouveaux widgets** :
+  - `custom_link` : label, url, couleurs fond/texte
+  - `mini_cart` : mode d'affichage (link/drawer), position drawer
+    (right/left), show_subtotal, show_checkout_button, show_thumbnail
+  - `search` : placeholder, live_suggestions (bool), min_chars (2-5),
+    show_category_filter
+  - `recent_posts` : columns (1-4), limit (1-12), orderby
+    (date/title/comment_count/rand), show_image, show_date, show_excerpt
+  - `social_icons` : size (12-64 px), liste dynamique de réseaux avec
+    boutons ajouter/supprimer
+  - `newsletter` : placeholder, button_label, provider
+    (internal/mailchimp/none), list_id, layout (inline/stacked),
+    success_message
+  - `filters` : show_categories, show_price, show_attributes + slugs
+    d'attributs séparés par virgule
+
+- **~570 lignes CSS frontend** pour les nouveaux composants : drawer
+  latéral (header/body/footer/overlay + position right/left), dropdown
+  de suggestions (media+body+badge promo + loading/empty states), cards
+  articles récents (media 16:9 + title 2-line clamp + date + excerpt),
+  icônes sociales (CSS mask SVG inline + 8 couleurs hover par réseau),
+  formulaire newsletter (inline/stacked + états success/error),
+  filtres WooCommerce (select/price range/checkboxes/actions) + section
+  responsive 768px.
+
+- **~430 lignes JS frontend** pour les 3 nouveaux modules :
+  - `initCartDrawer()` — création dynamique du drawer + overlay si non
+    présent dans le DOM, fetch REST, render items/total/actions, focus
+    management, Escape close, refresh auto sur `wc_fragments_refreshed`.
+  - `initLiveSearch()` — debounce 250 ms, fetch REST, render dropdown
+    avec image+title+price, navigation clavier ArrowUp/Down/Escape,
+    blur delay 200 ms pour permettre le clic sur suggestion.
+  - `initNewsletter()` — FormData POST vers admin-ajax, validation
+    email client-side (regex), gestion états success/error, reset form,
+    bouton disabled + label "Inscription…" pendant la requête.
+
+- **4 nouveaux hooks filters pour développeurs** :
+  - `wtm_search_suggest_query` — filtre les args `wc_get_products()`
+    pour la recherche live (permet d'exclure des catégories, etc.).
+  - `wtm_newsletter_subscription_handled` — court-circuite le stockage
+    internal : un plugin tiers Mailchimp peut retourner `true` après
+    un appel API et bypasser la table `wtm_newsletter_subscribers`.
+  - `wtm_newsletter_subscribed` — action déclenchée après succès,
+    reçoit `(email, provider, list_id)` pour sync CRM/webhooks.
+  - `wtm_widget_cache_duration` étendu pour les nouveaux widgets
+    `recent_posts` (en plus de `product_grid`, `category_grid`).
+
+- **`wp_localize_script('wtmFrontend', ...)` étendu** : passe désormais
+  `restUrl`, `restNonce`, `newsletterNonce` au JS frontend (en plus de
+  `ajaxUrl`, `breakpoint`, `i18n`, `wooCartFragments`). 9 nouvelles
+  clés i18n : `openCart`, `closeCart`, `cartEmpty`, `viewCart`,
+  `checkout`, `noResults`, `searching`, `subscribing`, `invalidEmail`.
+
+### Changed
+
+- **`Schema_Validator::WIDGET_TYPES`** étendu de 8 à 12 types. Validation
+  stricte par widget_type pour les 4 nouveaux + extension des validators
+  existants pour `mini_cart` (`display_mode`, `drawer_position`) et
+  `search` (`live_suggestions`, `min_chars`).
+
+- **`Menu_Renderer.php`** étendu (~430 lignes) : 4 nouvelles méthodes
+  `render_widget_recent_posts`, `render_widget_social_icons`,
+  `render_widget_newsletter`, `render_widget_filters` + helpers
+  `render_post_card`. Upgrade de `render_widget_mini_cart` (mode drawer
+  génère un `<button data-wtm-cart-drawer>`) et `render_widget_search`
+  (option `live_suggestions` ajoute `data-wtm-live-search` + conteneur
+  `<div data-wtm-suggestions>`).
+
+- **`Bootstrap.php`** instancie le nouveau `Frontend_Controller`
+  (`src/Api/Frontend_Controller.php`) sur chaque requête — REST routes
+  + admin-ajax handler.
+
+- **`Assets_Loader.php`** enrichit le `wp_localize_script` avec
+  `restUrl`, `restNonce`, `newsletterNonce` + 9 nouvelles clés i18n.
+
+- **`AddItemButton.js`** refactorisé : extraction de `WIDGET_SUBTYPES`
+  (12 entrées avec defaults), nouveau state `widgetPanelFor` qui bascule
+  vers le panneau de sélection du sous-type quand l'utilisateur clique
+  sur "Widget". Bouton "Retour" pour revenir au panneau principal.
+
+- **`PropertiesPanel.js`** étendu avec les inspecteurs pour les 7
+  nouveaux types de widgets (custom_link, mini_cart mode drawer, search
+  live, recent_posts, social_icons avec items dynamiques, newsletter,
+  filters).
+
+- **Bump version** 1.2.0 → 1.3.0 dans `woo-total-menu.php` (header +
+  `WTM_VERSION`), `package.json`, `readme.txt` (Stable tag + nouvelle
+  section Changelog), `CHANGELOG.md`, `versions/README.md`, `About.php`
+  (roadmap : v1.2.0 → done, v1.3.0 → current/done).
+
+### Security
+
+- **Nonce `wtm_newsletter`** vérifié sur le handler admin-ajax
+  `wtm_newsletter_subscribe` (mitigue spam cross-site).
+- **IP anonymisée** (dernier octet IPv4 à 0, IPv6 tronquée à /64)
+  lors du stockage des abonnés newsletter — conformité GDPR.
+- **Échappement systématique** sur tout le rendu : `esc_url`,
+  `esc_html`, `esc_attr`, `wp_kses_post`. Les slugs d'attributs
+  passent par `sanitize_title()`. Les réseaux sociaux par
+  `sanitize_html_class()`.
+- **REST endpoints** : `permission_callback => '__return_true'` pour
+  que les visiteurs non connectés puissent utiliser le drawer et la
+  recherche (le panier WooCommerce est lié à la session WC, pas à
+  l'utilisateur WP).
+- **Validation stricte** dans `Schema_Validator` pour les nouveaux
+  widgets : limit (1-12), columns (1-6), size (12-64), provider/layout
+  enums, etc.
+
 ## [1.2.0] - 2026-06-25
 
 ### Added

@@ -19,6 +19,7 @@ import { useSelect, useDispatch } from '@wordpress/data';
 
 import { WTM_STORE_NAME } from '../stores/menu';
 import { UI_STORE_NAME } from '../stores/ui';
+import { TextRow, NumberRow, CheckboxRow, SelectRow, ColorRow, TextareaRow } from './FieldRow';
 
 export default function PropertiesPanel() {
         const selectedItemId = useSelect((select) => select(UI_STORE_NAME).getSelectedItemId(), []);
@@ -252,117 +253,174 @@ function ItemProperties({ item }) {
                                                         <label>{__('Type de widget', 'woo-total-menu')}</label>
                                                         <code>{item.widget_type}</code>
                                                 </div>
-                                                <div className="wtm-properties__row">
-                                                        <label>{__('Libellé (optionnel)', 'woo-total-menu')}</label>
-                                                        <input
-                                                                type="text"
-                                                                value={item.label || ''}
-                                                                onChange={(e) => updateField('label', e.target.value)}
-                                                        />
-                                                </div>
+                                                <TextRow label={__('Libellé (optionnel)', 'woo-total-menu')} value={item.label} onChange={(v) => updateField('label', v)} />
                                                 {item.widget_type === 'html' && (
-                                                        <div className="wtm-properties__row">
-                                                                <label>{__('Contenu HTML', 'woo-total-menu')}</label>
-                                                                <textarea
-                                                                        rows="4"
-                                                                        value={item.widget_settings?.content || ''}
-                                                                        onChange={(e) => updateWidgetSetting('content', e.target.value)}
-                                                                />
-                                                        </div>
+                                                        <TextareaRow label={__('Contenu HTML', 'woo-total-menu')} value={item.widget_settings?.content} rows={4} onChange={(v) => updateWidgetSetting('content', v)} />
                                                 )}
                                                 {item.widget_type === 'banner' && (
                                                         <>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('URL de l\'image', 'woo-total-menu')}</label>
-                                                                        <input
-                                                                                type="text"
-                                                                                value={item.widget_settings?.image_url || ''}
-                                                                                onChange={(e) => updateWidgetSetting('image_url', e.target.value)}
-                                                                        />
-                                                                </div>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('Lien au clic', 'woo-total-menu')}</label>
-                                                                        <input
-                                                                                type="text"
-                                                                                value={item.widget_settings?.link_url || ''}
-                                                                                onChange={(e) => updateWidgetSetting('link_url', e.target.value)}
-                                                                        />
-                                                                </div>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('Texte alternatif', 'woo-total-menu')}</label>
-                                                                        <input
-                                                                                type="text"
-                                                                                value={item.widget_settings?.alt || ''}
-                                                                                onChange={(e) => updateWidgetSetting('alt', e.target.value)}
-                                                                        />
-                                                                </div>
+                                                                <TextRow label={__('URL de l\'image', 'woo-total-menu')} value={item.widget_settings?.image_url} onChange={(v) => updateWidgetSetting('image_url', v)} />
+                                                                <TextRow label={__('Lien au clic', 'woo-total-menu')} value={item.widget_settings?.link_url} onChange={(v) => updateWidgetSetting('link_url', v)} />
+                                                                <TextRow label={__('Texte alternatif', 'woo-total-menu')} value={item.widget_settings?.alt} onChange={(v) => updateWidgetSetting('alt', v)} />
+                                                        </>
+                                                )}
+                                                {item.widget_type === 'custom_link' && (
+                                                        <>
+                                                                <TextRow label={__('Libellé du lien', 'woo-total-menu')} value={item.widget_settings?.label} onChange={(v) => updateWidgetSetting('label', v)} />
+                                                                <TextRow label={__('URL', 'woo-total-menu')} value={item.widget_settings?.url} onChange={(v) => updateWidgetSetting('url', v)} />
+                                                                <ColorRow label={__('Couleur de fond', 'woo-total-menu')} value={item.widget_settings?.background || '#6C5CE7'} onChange={(v) => updateWidgetSetting('background', v)} />
+                                                                <ColorRow label={__('Couleur du texte', 'woo-total-menu')} value={item.widget_settings?.color || '#FFFFFF'} onChange={(v) => updateWidgetSetting('color', v)} />
                                                         </>
                                                 )}
                                                 {item.widget_type === 'product_grid' && (
                                                         <>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('Source', 'woo-total-menu')}</label>
-                                                                        <select
-                                                                                value={item.widget_settings?.product_source || 'featured'}
-                                                                                onChange={(e) => updateWidgetSetting('product_source', e.target.value)}
-                                                                        >
-                                                                                <option value="featured">{__('Mis en avant', 'woo-total-menu')}</option>
-                                                                                <option value="best_selling">{__('Meilleures ventes', 'woo-total-menu')}</option>
-                                                                                <option value="recent">{__('Récentes', 'woo-total-menu')}</option>
-                                                                                <option value="on_sale">{__('En promo', 'woo-total-menu')}</option>
-                                                                                <option value="custom">{__('Personnalisé', 'woo-total-menu')}</option>
-                                                                        </select>
-                                                                </div>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('Colonnes (1-6)', 'woo-total-menu')}</label>
-                                                                        <input
-                                                                                type="number"
-                                                                                min="1"
-                                                                                max="6"
-                                                                                value={item.widget_settings?.columns || 4}
-                                                                                onChange={(e) => updateWidgetSetting('columns', parseInt(e.target.value, 10))}
-                                                                        />
-                                                                </div>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('Limite (1-12)', 'woo-total-menu')}</label>
-                                                                        <input
-                                                                                type="number"
-                                                                                min="1"
-                                                                                max="12"
-                                                                                value={item.widget_settings?.limit || 4}
-                                                                                onChange={(e) => updateWidgetSetting('limit', parseInt(e.target.value, 10))}
-                                                                        />
-                                                                </div>
+                                                                <SelectRow
+                                                                        label={__('Source', 'woo-total-menu')}
+                                                                        value={item.widget_settings?.product_source || 'featured'}
+                                                                        onChange={(v) => updateWidgetSetting('product_source', v)}
+                                                                        options={[
+                                                                                { value: 'featured', label: __('Mis en avant', 'woo-total-menu') },
+                                                                                { value: 'best_selling', label: __('Meilleures ventes', 'woo-total-menu') },
+                                                                                { value: 'recent', label: __('Récentes', 'woo-total-menu') },
+                                                                                { value: 'on_sale', label: __('En promo', 'woo-total-menu') },
+                                                                                { value: 'custom', label: __('Personnalisé', 'woo-total-menu') },
+                                                                        ]}
+                                                                />
+                                                                <NumberRow label={__('Colonnes (1-6)', 'woo-total-menu')} value={item.widget_settings?.columns || 4} min="1" max="6" onChange={(v) => updateWidgetSetting('columns', v)} />
+                                                                <NumberRow label={__('Limite (1-12)', 'woo-total-menu')} value={item.widget_settings?.limit || 4} min="1" max="12" onChange={(v) => updateWidgetSetting('limit', v)} />
                                                         </>
                                                 )}
                                                 {item.widget_type === 'category_grid' && (
                                                         <>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('Colonnes (1-6)', 'woo-total-menu')}</label>
-                                                                        <input
-                                                                                type="number"
-                                                                                min="1"
-                                                                                max="6"
-                                                                                value={item.widget_settings?.columns || 3}
-                                                                                onChange={(e) => updateWidgetSetting('columns', parseInt(e.target.value, 10))}
+                                                                <NumberRow label={__('Colonnes (1-6)', 'woo-total-menu')} value={item.widget_settings?.columns || 3} min="1" max="6" onChange={(v) => updateWidgetSetting('columns', v)} />
+                                                                <NumberRow label={__('Limite (1-12)', 'woo-total-menu')} value={item.widget_settings?.limit || 6} min="1" max="12" onChange={(v) => updateWidgetSetting('limit', v)} />
+                                                                <CheckboxRow label={__('Afficher images', 'woo-total-menu')} checked={item.widget_settings?.show_images !== false} onChange={(v) => updateWidgetSetting('show_images', v)} />
+                                                                <CheckboxRow label={__('Afficher compteurs', 'woo-total-menu')} checked={item.widget_settings?.show_counts === true} onChange={(v) => updateWidgetSetting('show_counts', v)} />
+                                                        </>
+                                                )}
+                                                {item.widget_type === 'mini_cart' && (
+                                                        <>
+                                                                <SelectRow
+                                                                        label={__('Mode d\'affichage', 'woo-total-menu')}
+                                                                        value={item.widget_settings?.display_mode || 'link'}
+                                                                        onChange={(v) => updateWidgetSetting('display_mode', v)}
+                                                                        options={[
+                                                                                { value: 'link', label: __('Lien vers le panier', 'woo-total-menu') },
+                                                                                { value: 'drawer', label: __('Drawer latéral AJAX', 'woo-total-menu') },
+                                                                        ]}
+                                                                />
+                                                                {item.widget_settings?.display_mode === 'drawer' && (
+                                                                        <SelectRow
+                                                                                label={__('Position du drawer', 'woo-total-menu')}
+                                                                                value={item.widget_settings?.drawer_position || 'right'}
+                                                                                onChange={(v) => updateWidgetSetting('drawer_position', v)}
+                                                                                options={[
+                                                                                        { value: 'right', label: __('Droite', 'woo-total-menu') },
+                                                                                        { value: 'left', label: __('Gauche', 'woo-total-menu') },
+                                                                                ]}
                                                                         />
-                                                                </div>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('Afficher images', 'woo-total-menu')}</label>
-                                                                        <input
-                                                                                type="checkbox"
-                                                                                checked={item.widget_settings?.show_images !== false}
-                                                                                onChange={(e) => updateWidgetSetting('show_images', e.target.checked)}
+                                                                )}
+                                                                <CheckboxRow label={__('Afficher le sous-total', 'woo-total-menu')} checked={item.widget_settings?.show_subtotal !== false} onChange={(v) => updateWidgetSetting('show_subtotal', v)} />
+                                                                <CheckboxRow label={__('Afficher bouton "Commander"', 'woo-total-menu')} checked={item.widget_settings?.show_checkout_button === true} onChange={(v) => updateWidgetSetting('show_checkout_button', v)} />
+                                                                <CheckboxRow label={__('Afficher miniature produit', 'woo-total-menu')} checked={item.widget_settings?.show_thumbnail === true} onChange={(v) => updateWidgetSetting('show_thumbnail', v)} />
+                                                        </>
+                                                )}
+                                                {item.widget_type === 'search' && (
+                                                        <>
+                                                                <TextRow label={__('Placeholder', 'woo-total-menu')} value={item.widget_settings?.placeholder} onChange={(v) => updateWidgetSetting('placeholder', v)} />
+                                                                <CheckboxRow label={__('Suggestions live (AJAX)', 'woo-total-menu')} checked={item.widget_settings?.live_suggestions === true} onChange={(v) => updateWidgetSetting('live_suggestions', v)} />
+                                                                {item.widget_settings?.live_suggestions && (
+                                                                        <NumberRow label={__('Caractères min. (2-5)', 'woo-total-menu')} value={item.widget_settings?.min_chars || 3} min="2" max="5" onChange={(v) => updateWidgetSetting('min_chars', v)} />
+                                                                )}
+                                                                <CheckboxRow label={__('Filtre par catégorie', 'woo-total-menu')} checked={item.widget_settings?.show_category_filter === true} onChange={(v) => updateWidgetSetting('show_category_filter', v)} />
+                                                        </>
+                                                )}
+                                                {item.widget_type === 'recent_posts' && (
+                                                        <>
+                                                                <NumberRow label={__('Colonnes (1-4)', 'woo-total-menu')} value={item.widget_settings?.columns || 2} min="1" max="4" onChange={(v) => updateWidgetSetting('columns', v)} />
+                                                                <NumberRow label={__('Limite (1-12)', 'woo-total-menu')} value={item.widget_settings?.limit || 4} min="1" max="12" onChange={(v) => updateWidgetSetting('limit', v)} />
+                                                                <SelectRow
+                                                                        label={__('Tri', 'woo-total-menu')}
+                                                                        value={item.widget_settings?.orderby || 'date'}
+                                                                        onChange={(v) => updateWidgetSetting('orderby', v)}
+                                                                        options={[
+                                                                                { value: 'date', label: __('Date (récent)', 'woo-total-menu') },
+                                                                                { value: 'title', label: __('Titre (A-Z)', 'woo-total-menu') },
+                                                                                { value: 'comment_count', label: __('Plus commentés', 'woo-total-menu') },
+                                                                                { value: 'rand', label: __('Aléatoire', 'woo-total-menu') },
+                                                                        ]}
+                                                                />
+                                                                <CheckboxRow label={__('Afficher image', 'woo-total-menu')} checked={item.widget_settings?.show_image === true} onChange={(v) => updateWidgetSetting('show_image', v)} />
+                                                                <CheckboxRow label={__('Afficher date', 'woo-total-menu')} checked={item.widget_settings?.show_date !== false} onChange={(v) => updateWidgetSetting('show_date', v)} />
+                                                                <CheckboxRow label={__('Afficher extrait', 'woo-total-menu')} checked={item.widget_settings?.show_excerpt === true} onChange={(v) => updateWidgetSetting('show_excerpt', v)} />
+                                                        </>
+                                                )}
+                                                {item.widget_type === 'social_icons' && (
+                                                        <>
+                                                                <NumberRow label={__('Taille icône (12-64 px)', 'woo-total-menu')} value={item.widget_settings?.size || 24} min="12" max="64" onChange={(v) => updateWidgetSetting('size', v)} />
+                                                                <TextareaRow
+                                                                        label={__('Réseaux (un par ligne : network,url)', 'woo-total-menu')}
+                                                                        rows={4}
+                                                                        value={(item.widget_settings?.items || []).map((s) => (s.network || '') + ',' + (s.url || '')).join('\n')}
+                                                                        onChange={(v) => {
+                                                                                const items = v.split('\n').filter(Boolean).map((line) => {
+                                                                                        const parts = line.split(',').map((s) => s.trim());
+                                                                                        return { network: parts[0] || '', url: parts[1] || '' };
+                                                                                });
+                                                                                updateWidgetSetting('items', items);
+                                                                        }}
+                                                                />
+                                                        </>
+                                                )}
+                                                {item.widget_type === 'newsletter' && (
+                                                        <>
+                                                                <TextRow label={__('Placeholder', 'woo-total-menu')} value={item.widget_settings?.placeholder} onChange={(v) => updateWidgetSetting('placeholder', v)} />
+                                                                <TextRow label={__('Libellé du bouton', 'woo-total-menu')} value={item.widget_settings?.button_label} onChange={(v) => updateWidgetSetting('button_label', v)} />
+                                                                <SelectRow
+                                                                        label={__('Provider', 'woo-total-menu')}
+                                                                        value={item.widget_settings?.provider || 'internal'}
+                                                                        onChange={(v) => updateWidgetSetting('provider', v)}
+                                                                        options={[
+                                                                                { value: 'internal', label: __('Interne (sauvegarde en base)', 'woo-total-menu') },
+                                                                                { value: 'mailchimp', label: __('Mailchimp (via hook)', 'woo-total-menu') },
+                                                                                { value: 'none', label: __('Aucun (démo)', 'woo-total-menu') },
+                                                                        ]}
+                                                                />
+                                                                <TextRow label={__('ID de liste (optionnel)', 'woo-total-menu')} value={item.widget_settings?.list_id} onChange={(v) => updateWidgetSetting('list_id', v)} />
+                                                                <SelectRow
+                                                                        label={__('Disposition', 'woo-total-menu')}
+                                                                        value={item.widget_settings?.layout || 'inline'}
+                                                                        onChange={(v) => updateWidgetSetting('layout', v)}
+                                                                        options={[
+                                                                                { value: 'inline', label: __('Inline (champ + bouton côte à côte)', 'woo-total-menu') },
+                                                                                { value: 'stacked', label: __('Empilé (champ au-dessus du bouton)', 'woo-total-menu') },
+                                                                        ]}
+                                                                />
+                                                                <TextareaRow label={__('Message de succès', 'woo-total-menu')} value={item.widget_settings?.success_message} rows={2} onChange={(v) => updateWidgetSetting('success_message', v)} />
+                                                        </>
+                                                )}
+                                                {item.widget_type === 'filters' && (
+                                                        <>
+                                                                <CheckboxRow label={__('Filtre catégories', 'woo-total-menu')} checked={item.widget_settings?.show_categories !== false} onChange={(v) => updateWidgetSetting('show_categories', v)} />
+                                                                <CheckboxRow label={__('Filtre prix', 'woo-total-menu')} checked={item.widget_settings?.show_price === true} onChange={(v) => updateWidgetSetting('show_price', v)} />
+                                                                <CheckboxRow label={__('Filtre attributs', 'woo-total-menu')} checked={item.widget_settings?.show_attributes === true} onChange={(v) => updateWidgetSetting('show_attributes', v)} />
+                                                                {item.widget_settings?.show_attributes && (
+                                                                        <TextRow
+                                                                                label={__('Slugs d\'attributs (séparés par virgule)', 'woo-total-menu')}
+                                                                                value={(item.widget_settings?.attributes || []).join(',')}
+                                                                                placeholder="couleur,taille"
+                                                                                onChange={(v) => {
+                                                                                        const arr = v.split(',').map((s) => s.trim()).filter(Boolean);
+                                                                                        updateWidgetSetting('attributes', arr);
+                                                                                }}
                                                                         />
-                                                                </div>
-                                                                <div className="wtm-properties__row">
-                                                                        <label>{__('Afficher compteurs', 'woo-total-menu')}</label>
-                                                                        <input
-                                                                                type="checkbox"
-                                                                                checked={item.widget_settings?.show_counts === true}
-                                                                                onChange={(e) => updateWidgetSetting('show_counts', e.target.checked)}
-                                                                        />
-                                                                </div>
+                                                                )}
+                                                        </>
+                                                )}
+                                                {item.widget_type === 'title' && (
+                                                        <>
+                                                                <TextRow label={__('Texte', 'woo-total-menu')} value={item.widget_settings?.text} onChange={(v) => updateWidgetSetting('text', v)} />
+                                                                <NumberRow label={__('Niveau (1-6)', 'woo-total-menu')} value={item.widget_settings?.level || 4} min="1" max="6" onChange={(v) => updateWidgetSetting('level', v)} />
                                                         </>
                                                 )}
                                         </>

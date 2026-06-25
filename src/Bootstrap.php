@@ -109,6 +109,10 @@ class Bootstrap {
                 // v1.1.5 — Revisions REST controller (/wtm/v1/menus/{id}/revisions…).
                 $this->services['rest_revisions'] = new \WooTotalMenu\Api\Revisions_Controller();
 
+                // v1.3.0 — Frontend AJAX controller (search-suggest, mini-cart-contents,
+                // newsletter-subscribe). Public endpoints + admin-ajax handler.
+                $this->services['rest_frontend'] = new \WooTotalMenu\Api\Frontend_Controller();
+
                 // v1.1.4 — Preview iframe controller (REST /wtm/v1/preview-frame).
                 // Loaded on every request so the iframe document is reachable
                 // via REST even when is_admin() is false (the iframe loads

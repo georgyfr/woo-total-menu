@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,26 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.3.0 =
+* New: 4 nouveaux widgets WooCommerce avancés — `recent_posts` (articles WordPress en grille), `social_icons` (icônes réseaux sociaux avec glyphes SVG inline Facebook/Twitter/Instagram/LinkedIn/YouTube/Pinterest/GitHub), `newsletter` (formulaire d'abonnement email avec AJAX + nonce + providers internal/mailchimp/none), `filters` (filtres WooCommerce layered nav : catégories/prix/attributs).
+* New: Widget `mini_cart` upgraded — nouveau mode `display_mode: 'drawer'` qui ouvre un panneau latéral AJAX avec le contenu du panier (items, quantités, total, boutons Voir le panier/Commander). Récupère les données via la route REST `/wtm/v1/mini-cart-contents`. Refresh automatique quand les WC cart fragments sont mis à jour.
+* New: Widget `search` upgraded — nouvelle option `live_suggestions` qui active un dropdown de suggestions produits en AJAX (debounce 250 ms, minimum 2-5 caractères configurable). Navigation clavier (ArrowUp/ArrowDown/Escape) + aria-role listbox.
+* New: 2 routes REST publiques — `GET /wtm/v1/search-suggest?s=…&limit=5` (recherche produits par relevance, retourne id/title/permalink/price_html/thumbnail/on_sale) et `GET /wtm/v1/mini-cart-contents` (contenu complet du panier pour le drawer).
+* New: 1 admin-ajax handler — `wtm_newsletter_subscribe` (vérifie le nonce `wtm_newsletter`, valide l'email, stocke dans l'option `wtm_newsletter_subscribers` avec IP anonymisée GDPR-friendly pour le provider internal, déclenche les hooks `wtm_newsletter_subscription_handled` et `wtm_newsletter_subscribed` pour intégrations tierces Mailchimp).
+* New: `WIDGET_SUBTYPES` picker dans AddItemButton.js — quand l'utilisateur choisit "Widget", un panneau secondaire s'ouvre avec les 12 sous-types de widgets (html, banner, custom_link, product_grid, category_grid, mini_cart, search, recent_posts, social_icons, newsletter, filters, title), chacun avec icône + description + defaults spécifiques.
+* New: Inspecteurs PropertiesPanel.js pour les 7 nouveaux types de widgets — chaque widget a son propre formulaire d'édition (mode d'affichage + position pour mini_cart, suggestions live + min_chars pour search, tri + colonnes + image/date/extrait pour recent_posts, liste dynamique réseaux sociaux pour social_icons, provider + layout + message de succès pour newsletter, filtres catégories/prix/attributs pour filters, etc.).
+* New: ~570 lignes CSS frontend pour les nouveaux composants — drawer latéral (header/body/footer/overlay), dropdown de suggestions (image+titre+prix+badge promo), cards articles récents (media+title+date+extrait), icônes sociales (CSS mask SVG inline + couleurs hover par réseau), formulaire newsletter (inline/stacked + états success/error), filtres WooCommerce (select/price range/checkboxes/actions) + responsive 768px.
+* New: ~430 lignes JS frontend pour les 3 nouveaux modules — `initCartDrawer()` (création dynamique du drawer + overlay si non présent, fetch REST, render items/total/actions, focus management, Escape close, refresh auto sur wc_fragments_refreshed), `initLiveSearch()` (debounce 250 ms, fetch REST, render dropdown, navigation clavier, blur delay pour clic), `initNewsletter()` (FormData POST vers admin-ajax, validation email, gestion états success/error, reset form).
+* New: 4 nouveaux hooks filters pour développeurs — `wtm_search_suggest_query` (filtre la WP_Query du search-suggest), `wtm_newsletter_subscription_handled` (court-circuite le stockage internal pour déléguer à Mailchimp), `wtm_newsletter_subscribed` (action post-subscription pour sync CRM).
+* New: `wp_localize_script` étendu — passe désormais `restUrl`, `restNonce`, `newsletterNonce` au JS frontend (en plus de `ajaxUrl`, `breakpoint`, `i18n`, `wooCartFragments`). 6 nouvelles clés i18n (openCart, closeCart, cartEmpty, viewCart, checkout, noResults, searching, subscribing, invalidEmail).
+* Update: `Schema_Validator::WIDGET_TYPES` étendu de 8 à 12 types. Validation stricte par widget_type pour les 4 nouveaux (recent_posts: limit/columns/orderby/show_image/show_date/show_excerpt, social_icons: items[]/size, newsletter: provider/layout, filters: show_categories/show_price/show_attributes/attributes/columns) + extension des validators existants pour mini_cart (display_mode/drawer_position) et search (live_suggestions/min_chars).
+* Update: `Menu_Renderer.php` étendu (~430 lignes) — 4 nouvelles méthodes `render_widget_recent_posts`, `render_widget_social_icons`, `render_widget_newsletter`, `render_widget_filters` + helpers `render_post_card`. Upgrade `render_widget_mini_cart` (mode drawer génère un `<button data-wtm-cart-drawer>` au lieu d'un `<a>`) et `render_widget_search` (option `live_suggestions` ajoute `data-wtm-live-search` + conteneur suggestions).
+* Update: `Bootstrap.php` instancie le nouveau `Frontend_Controller` (REST + admin-ajax) sur chaque requête.
+* Update: `Assets_Loader.php` enrichit le `wp_localize_script` avec `restUrl`, `restNonce`, `newsletterNonce` + 6 nouvelles clés i18n.
+* Update: `AddItemButton.js` refactorisé — quand l'utilisateur clique sur "Widget", un sous-panneau s'ouvre avec les 12 sous-types (au lieu d'ajouter directement un widget html par défaut).
+* Update: Bump version 1.2.0 → 1.3.0 (woo-total-menu.php, package.json, readme.txt)
+* Security: Nonce `wtm_newsletter` vérifié sur le handler newsletter (mitigue spam). Emails stockés avec IP anonymisée (dernier octet IPv4 /64 IPv6 — GDPR). Échappement systématique sur tout le rendu (esc_url/esc_html/esc_attr/wp_kses_post).
 
 = 1.2.0 =
 * New: Rendu frontend complet — les menus wtm_menu s'affichent désormais côté visiteur (spec §2.4, §5). Quatre types de menus supportés : horizontal (méga menu), vertical (sidebar), off-canvas (mobile), footer (multi-colonnes).
