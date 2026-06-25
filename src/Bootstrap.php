@@ -151,6 +151,46 @@ class Bootstrap {
                 //     ses hooks lui-même via son constructeur.
                 $this->services['rest_templates'] = new \WooTotalMenu\Api\Templates_Controller();
 
+                // v1.6.0 — Roles Controller (5 routes REST /wtm/v1/roles).
+                //   - Liste / détail / création / maj caps / suppression de rôles.
+                //   - Gère aussi bien les rôles WordPress standards que les rôles
+                //     personnalisés créés via le plugin (préfixe `wtm_`).
+                $this->services['rest_roles'] = new \WooTotalMenu\Api\Roles_Controller();
+
+                // v1.6.0 — Gutenberg blocks (3 blocs server-render : menu, header, footer).
+                //   - register_block_type() appelé sur `init` par Gutenberg_Blocks.
+                //   - Editor JS minimaliste (placeholder + sidebar controls) — le rendu
+                //     est fait côté serveur via Menu_Renderer / Header_Footer_Renderer.
+                $this->services['gutenberg_blocks'] = new \WooTotalMenu\Integration\Gutenberg_Blocks(
+                        $this->services['menu_renderer'],
+                        $this->services['hf_renderer']
+                );
+
+                // v1.6.0 — Page builders integrations (Elementor / Bricks / Oxygen).
+                //   - Elementor : widget custom "Woo Total Menu" (si \Elementor\Widget_Base exists).
+                //   - Bricks    : élément custom "wtm-menu" (si BRICKS_VERSION defined).
+                //   - Oxygen    : 3 shortcodes additionnels [wtm_header], [wtm_footer],
+                //                 [wtm_oxygen_menu] + helper wtm_oxygen_render_menu().
+                // Tous sont lazy-initialized : si le page builder n'est pas actif,
+                // l'intégration ne s'instancie pas, économisant des hooks inutiles.
+                if ( \WooTotalMenu\Integration\Elementor_Integration::is_active() ) {
+                        $this->services['elementor_integration'] = new \WooTotalMenu\Integration\Elementor_Integration(
+                                $this->services['menu_renderer']
+                        );
+                }
+                if ( \WooTotalMenu\Integration\Bricks_Integration::is_active() ) {
+                        $this->services['bricks_integration'] = new \WooTotalMenu\Integration\Bricks_Integration(
+                                $this->services['menu_renderer']
+                        );
+                }
+                // Oxygen est toujours "activé" car les shortcodes additionnels sont
+                // utiles même sans Oxygen (peuvent être appelés depuis n'importe quel
+                // shortcode-aware context).
+                $this->services['oxygen_integration'] = new \WooTotalMenu\Integration\Oxygen_Integration(
+                        $this->services['menu_renderer'],
+                        $this->services['hf_renderer']
+                );
+
                 // Admin (only in wp-admin context).
                 if ( is_admin() ) {
                         $this->services['admin_menu']  = new \WooTotalMenu\Admin\Admin_Menu();
@@ -191,6 +231,10 @@ class Bootstrap {
                 add_action( 'wtm_settings_saved', array( $this, 'purge_dynamic_css' ) );
                 // Also purge on revision restore (spec §7.6).
                 add_action( 'wp_restore_post_revision', array( $this, 'purge_dynamic_css' ) );
+
+                // v1.6.0 — Multisite support : initialise les nouveaux blogs créés
+                // après activation réseau. Le hook n'est déclenché qu'en multisite.
+                add_action( 'wpmu_new_blog', array( '\\WooTotalMenu\\Core\\Multisite_Manager', 'on_new_blog' ) );
         }
 
         /**
@@ -239,10 +283,18 @@ class Bootstrap {
          * Plugin activation handler.
          *
          * Creates default options, marks DB version, registers capabilities.
+         * In multisite network-activation, sets up every blog via Multisite_Manager.
          *
+         * @param bool $network_wide True si activation réseau (multisite).
          * @return void
          */
-        public static function on_activate() {
+        public static function on_activate( $network_wide = false ) {
+                // v1.6.0 — Multisite : si activation réseau, initialiser tous les blogs.
+                if ( $network_wide && is_multisite() ) {
+                        \WooTotalMenu\Core\Multisite_Manager::on_network_activate( $network_wide );
+                        return;
+                }
+
                 // Default settings.
                 if ( false === get_option( WTM_OPTION_SETTINGS ) ) {
                         add_option( WTM_OPTION_SETTINGS, self::default_settings() );
@@ -256,15 +308,40 @@ class Bootstrap {
 
                 // Flush rewrite rules after activation.
                 flush_rewrite_rules( false );
+
+                /**
+                 * Fires after Woo Total Menu is activated on a single site.
+                 *
+                 * @since 1.6.0
+                 */
+                do_action( 'wtm_activated' );
         }
 
         /**
          * Plugin deactivation handler.
          *
+         * En multisite réseau, flush les rewrite rules de tous les blogs.
+         *
+         * @param bool $network_wide True si désactivation réseau.
          * @return void
          */
-        public static function on_deactivate() {
+        public static function on_deactivate( $network_wide = false ) {
+                if ( $network_wide && is_multisite() ) {
+                        \WooTotalMenu\Core\Multisite_Manager::for_each_blog(
+                                static function () {
+                                        flush_rewrite_rules( false );
+                                }
+                        );
+                        return;
+                }
                 flush_rewrite_rules( false );
+
+                /**
+                 * Fires after Woo Total Menu is deactivated.
+                 *
+                 * @since 1.6.0
+                 */
+                do_action( 'wtm_deactivated' );
         }
 
         /**

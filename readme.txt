@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,20 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.6.0 =
+* New: **Rôles personnalisés** — `Roles_Manager` (`src/Core/Roles_Manager.php`, ~370 lignes). Création, mise à jour et suppression de rôles WordPress dédiés au plugin (préfixe `wtm_` automatique). Protection des 5 rôles WordPress standards contre la suppression. Réassignation automatique des utilisateurs vers `subscriber` lors de la suppression d'un rôle custom. Stockage de la liste des rôles custom dans l'option `wtm_custom_roles`.
+* New: **API REST `/wtm/v1/roles`** (`src/Api/Roles_Controller.php`, ~280 lignes) — 5 endpoints : `GET /roles` (liste), `GET /roles/{slug}` (détail), `POST /roles` (création), `PUT /roles/{slug}` (maj caps), `DELETE /roles/{slug}/delete` (suppression). Toutes requièrent `wtm_manage_settings`.
+* New: **3 blocs Gutenberg** (`src/Integration/Gutenberg_Blocks.php`, ~290 lignes) — `wtm/menu`, `wtm/header`, `wtm/footer` server-rendered via `register_block_type`. Sidebar `SelectControl` pour choisir un menu WTM publié. Placeholder HTML si non configuré. Editor JS `blocks/index.js` (~210 lignes).
+* New: **Intégration Elementor** (`src/Integration/Elementor_Integration.php` + `Elementor_Widget.php`, ~265 lignes) — widget "Woo Total Menu" (icône `eicon-nav-menu`, catégorie `general`). Contrôle SELECT pour le menu. Lazy-loaded si Elementor actif. Widget dans fichier séparé pour éviter le chargement de `\Elementor\Widget_Base` quand Elementor est absent.
+* New: **Intégration Bricks** (`src/Integration/Bricks_Integration.php`, ~140 lignes) — élément custom `wtm-menu` enregistré via `bricks/builder/elements`. Hook de rendu `bricks/element/render/wtm-menu`. Lazy-loaded si Bricks actif.
+* New: **Intégration Oxygen** (`src/Integration/Oxygen_Integration.php`, ~165 lignes) — 3 shortcodes additionnels `[wtm_header id="42"]`, `[wtm_footer id="42"]`, `[wtm_oxygen_menu id="42"]` + helper PHP `wtm_oxygen_render_menu($menu_id)`.
+* New: **Multisite** — `Multisite_Manager` (`src/Core/Multisite_Manager.php`, ~210 lignes). Activation réseau initialise tous les blogs existants. Hook `wpmu_new_blog` initialise les nouveaux blogs créés. `for_each_blog($callback)` helper. `get_network_stats()` statistiques réseau. Désactivation/désinstallation réseau-aware.
+* New: **8 hooks/filters développeur** — `wtm_role_created`, `wtm_role_updated`, `wtm_role_deleted`, `wtm_activated`, `wtm_deactivated`, `wtm_network_activated`, `wtm_multisite_blog_setup`, `wtm_multisite_blog_cleanup`.
+* Changed: **Bootstrap** — `on_activate($network_wide)` / `on_deactivate($network_wide)` multisite-aware. Instanciation des nouvelles classes (Roles_Controller, Gutenberg_Blocks, 3 intégrations page-builders). Hook `wpmu_new_blog` enregistré.
+* Changed: **Webpack config** — ajout entry point `blocks: './blocks/index.js'`. Bundle `build/blocks.js` (3.99 KiB) + `build/style-blocks.css` (334 o).
+* Changed: **Plugin version** — bump `1.5.0` → `1.6.0` (en-tête + constante `WTM_VERSION` + `package.json`).
+* Tests: 30/30 backend tests passent via `/home/z/my-project/scripts/test-v1.6.0-endpoint.php`.
 
 = 1.5.0 =
 * New: **Système de templates intégrés** (spec §1.4.2) — 12 templates prêts à l'emploi, répartis en 4 menus + 4 headers + 4 footers. Catégorisation métier : ecommerce (5), minimal (4), blog (1), corporate (1), electronics (1).

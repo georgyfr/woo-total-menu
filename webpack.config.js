@@ -1,11 +1,12 @@
 /**
- * Webpack config override for Woo Total Menu Builder.
+ * Webpack config override for Woo Total Menu.
  *
- * Default @wordpress/scripts looks in ./src/index.js, but we use ./builder/index.js
- * to keep the React source separate from the PHP src/ directory.
+ * Two entry points:
+ *   - index  → ./builder/index.js  (React Builder UI)
+ *   - blocks → ./blocks/index.js   (Gutenberg editor blocks)
  *
  * The defaultConfig passed by @wordpress/scripts is a function
- * (env, argv) => config. We need to wrap and override its entry.
+ * (env, argv) => config. We wrap and override its entry.
  *
  * @param {object} env Webpack environment.
  * @param {object} argv Webpack args.
@@ -19,9 +20,10 @@ module.exports = (env, argv) => {
 		? defaultConfig(env, argv)
 		: { ...defaultConfig };
 
-	// Override the default entry point.
+	// Override the default entry point with two entries.
 	config.entry = {
 		index: './builder/index.js',
+		blocks: './blocks/index.js',
 	};
 
 	return config;

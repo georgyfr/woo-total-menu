@@ -5,6 +5,116 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-06-26
+
+### Added
+
+- **Rôles personnalisés** — `Roles_Manager` (`src/Core/Roles_Manager.php`,
+  ~370 lignes) :
+  - Création, mise à jour et suppression de rôles WordPress personnalisés
+    dédiés au plugin (préfixe `wtm_` automatique).
+  - API statique : `get_all_roles()`, `get_role($slug)`, `create_role($slug,
+    $name, $caps)`, `update_role_caps($slug, $caps)`, `delete_role($slug)`,
+    `is_custom_role($slug)`, `get_custom_role_slugs()`.
+  - Protection : les 5 rôles WordPress standards ne peuvent jamais être
+    supprimés. Administrator a toujours toutes les caps WTM.
+  - Réassignation automatique des utilisateurs vers le rôle `subscriber`
+    lorsqu'un rôle custom est supprimé.
+  - Stockage de la liste des rôles custom dans l'option `wtm_custom_roles`.
+
+- **API REST — `Roles_Controller`** (`src/Api/Roles_Controller.php`,
+  ~280 lignes) :
+  - 5 routes REST sous `/wtm/v1/roles` :
+    - `GET /roles` — liste tous les rôles + leurs caps WTM.
+    - `GET /roles/{slug}` — détail d'un rôle.
+    - `POST /roles` — crée un rôle custom (body : `{ slug, name, caps }`).
+    - `PUT /roles/{slug}` — met à jour un sous-ensemble de caps.
+    - `DELETE /roles/{slug}/delete` — supprime un rôle custom.
+  - Toutes les routes requièrent la capacité `wtm_manage_settings`.
+
+- **Blocs Gutenberg** — `Gutenberg_Blocks` (`src/Integration/Gutenberg_Blocks.php`,
+  ~290 lignes) :
+  - 3 blocs dynamiques server-rendered via `register_block_type` :
+    - `wtm/menu` — affiche un menu WTM par ID ou par emplacement.
+    - `wtm/header` — affiche un header WTM (utilise la config header du menu).
+    - `wtm/footer` — affiche un footer WTM (utilise la config footer du menu).
+  - `render_callback` PHP qui délègue à `Menu_Renderer::render_by_id()` ou
+    `Header_Footer_Renderer::render_header_by_id()` / `render_footer_by_id()`.
+  - Placeholder HTML si le bloc n'est pas configuré ou que le menu cible
+    n'existe pas.
+  - Editor JS minimaliste (`blocks/index.js`, ~210 lignes) avec sidebar
+    `SelectControl` pour choisir un menu WTM publié (liste injectée via
+    `wp_localize_script` → `wtmBlocksData.menus`).
+
+- **Intégration Elementor** — `Elementor_Integration` +
+  `WTM_Elementor_Widget` (`src/Integration/Elementor_Integration.php` +
+  `src/Integration/Elementor_Widget.php`, ~265 lignes) :
+  - Widget custom "Woo Total Menu" (icône `eicon-nav-menu`, catégorie
+    `general`).
+  - Contrôle SELECT pour choisir un menu WTM publié.
+  - Lazy-loaded : ne s'instancie que si `class_exists('\Elementor\Widget_Base')`.
+  - Widget dans un fichier séparé pour éviter le chargement de
+    `\Elementor\Widget_Base` quand Elementor n'est pas actif.
+
+- **Intégration Bricks** — `Bricks_Integration`
+  (`src/Integration/Bricks_Integration.php`, ~140 lignes) :
+  - Élément custom `wtm-menu` enregistré via `bricks/builder/elements`.
+  - Hook de rendu `bricks/element/render/wtm-menu`.
+  - Lazy-loaded : ne s'instancie que si `defined('BRICKS_VERSION')` ou
+    `class_exists('\Bricks\Element')`.
+
+- **Intégration Oxygen** — `Oxygen_Integration`
+  (`src/Integration/Oxygen_Integration.php`, ~165 lignes) :
+  - 3 shortcodes additionnels utilisables partout (y compris dans Oxygen
+    via le bloc "Shortcode") :
+    - `[wtm_header id="42"]` — affiche un header WTM.
+    - `[wtm_footer id="42"]` — affiche un footer WTM.
+    - `[wtm_oxygen_menu id="42"]` — alias explicite de `[wtm_menu]`.
+  - Helper PHP global `wtm_oxygen_render_menu($menu_id)` pour les
+    templates PHP Oxygen.
+
+- **Multisite** — `Multisite_Manager` (`src/Core/Multisite_Manager.php`,
+  ~210 lignes) :
+  - Activation réseau : initialise tous les blogs existants (options, caps,
+    flush rewrite rules).
+  - Hook `wpmu_new_blog` : initialise automatiquement les nouveaux blogs
+    créés après activation réseau.
+  - `for_each_blog($callback)` : helper qui parcourt tous les blogs actifs
+    du réseau (avec `switch_to_blog` / `restore_current_blog`). En
+    single-site, exécute une fois sur le blog courant.
+  - `get_network_stats()` : statistiques réseau (`total_blogs`,
+    `total_menus`, `active_blogs`, `per_blog`).
+  - Désactivation réseau : flush rewrite rules sur tous les blogs.
+  - Désinstallation réseau : suppression de toutes les options + caps sur
+    tous les blogs.
+
+- **8 hooks/filters développeur** :
+  - `wtm_role_created` ($slug, $name, $granted) — après création d'un rôle.
+  - `wtm_role_updated` ($slug, $caps) — après mise à jour des caps.
+  - `wtm_role_deleted` ($slug) — après suppression d'un rôle.
+  - `wtm_activated` — après activation simple.
+  - `wtm_deactivated` — après désactivation.
+  - `wtm_network_activated` — après activation réseau complète.
+  - `wtm_multisite_blog_setup` ($blog_id) — après setup d'un blog.
+  - `wtm_multisite_blog_cleanup` ($blog_id) — après cleanup d'un blog.
+
+### Changed
+
+- **Bootstrap** (`src/Bootstrap.php`) :
+  - `on_activate($network_wide = false)` et `on_deactivate($network_wide = false)`
+    acceptent le paramètre WordPress standard pour gérer l'activation réseau.
+  - Instanciation de `Roles_Controller`, `Gutenberg_Blocks`, et 3 intégrations
+    page-builders (Elementor et Bricks sont lazy-loaded selon leur disponibilité ;
+    Oxygen est toujours instancié car les shortcodes sont utiles partout).
+  - Hook `wpmu_new_blog` enregistré dans `register_hooks()`.
+
+- **Webpack config** (`webpack.config.js`) : ajout d'un entry point
+  `blocks: './blocks/index.js'` pour générer le bundle `build/blocks.js` (3.99 KiB)
+  + `build/style-blocks.css` (334 o) dédiés à l'éditeur Gutenberg.
+
+- **Plugin version** : bump `1.5.0` → `1.6.0` dans `woo-total-menu.php`
+  (en-tête + constante `WTM_VERSION`) et `package.json`.
+
 ## [1.5.0] - 2026-06-26
 
 ### Added
