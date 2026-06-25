@@ -4,7 +4,7 @@ Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,25 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.1.2 =
+* New: Drag & drop arborescent complet via @dnd-kit (réordonnancement + nesting + cross-level moves)
+* New: Indicateurs visuels de drop : ligne bleue avant/après, bordure pointillée pour "inside" (spec §6.3.2)
+* New: Drag handle (icône ⠿) sur chaque item + ghost overlay qui suit le curseur (spec §6.3.1)
+* New: Auto-expand des containers repliés après 500ms de survol (spec §6.3.2)
+* New: Raccourcis clavier pour réorganiser : Ctrl+↑/↓ (réordonner), Ctrl+→ (indenter), Ctrl+← (outdenter) (spec §6.3.5)
+* New: Boutons Undo/Redo dans le header + raccourcis Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y (spec §9.9)
+* New: Annonces ARIA aria-live="polite" après chaque déplacement pour les lecteurs d'écran (spec §6.7)
+* New: Validation des règles de nesting en temps réel (mega_container→column uniquement, column→widget/link, etc.) (spec §3.4.2)
+* New: Store wtm/menu étendu avec past/future stacks (max 50 snapshots) + actions undo(), redo(), clearHistory()
+* New: Store wtm/ui étendu avec announcement + actions setAnnouncement(msg), clearAnnouncement()
+* New: Helper dnd-helpers.js (computeDropPosition, isValidDrop, computeMoveTarget, isAncestorOf)
+* New: Helpers store addItem/moveItem/insertItemAtIndex avec nesting validation
+* Fix: Bug critique mapItems() qui réassignait une const → crash sur toute opération d'arbre non-root (menu.js:63-65)
+* Fix: Action moveItem() réécrite pour utiliser insertItemAtIndex (au lieu de mapItems imbriqué)
+* Update: Build bundle 28.6 Ko → 85.7 Ko (inclut @dnd-kit/core + @dnd-kit/sortable + @dnd-kit/utilities)
+* Update: package.json : ajout de @dnd-kit/core@^6.3.1, @dnd-kit/sortable@^10.0.0, @dnd-kit/utilities@^3.2.2, @dnd-kit/modifiers@^9.0.0 ; bump version 1.1.0 → 1.1.2
+* Update: style.css : +173 lignes pour DnD (drag handle, drop indicators, drag overlay, undo/redo buttons, sr-announcement)
 
 = 1.1.1 =
 * New: CRUD complet des items dans le builder React

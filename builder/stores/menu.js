@@ -1,12 +1,18 @@
 /**
  * wtm/menu store — handles the menu state (CRUD via REST API).
  *
+ * Includes:
+ *  - Item CRUD (added in v1.1.1)
+ *  - Undo/Redo with past/future snapshots (added in v1.1.2)
+ *  - Helper for drag & drop nesting validation (added in v1.1.2)
+ *
  * @package WooTotalMenu
  * @since 1.1.0
  */
 
 import { createReduxStore, register } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
+import { __ } from '@wordpress/i18n';
 
 const DEFAULT_STATE = {
 	menu: null,
@@ -14,6 +20,9 @@ const DEFAULT_STATE = {
 	isSaving: false,
 	error: null,
 	isDirty: false,
+	// Undo/Redo history (added in v1.1.2)
+	past: [],   // Array of past menu configs (most recent last)
+	future: [], // Array of future menu configs (most recent first)
 };
 
 // Counter used to generate unique IDs for new items.
@@ -49,6 +58,27 @@ function findItem(items, id) {
 }
 
 /**
+ * Recursively find the parent ID and index of an item by ID.
+ *
+ * @param {Array}  items   Items array.
+ * @param {string} id      Item ID.
+ * @param {string} parentId Current parent ID (null for root).
+ * @return {{parentId: string|null, index: number}|null} Location info or null.
+ */
+function findItemLocation(items, id, parentId = null) {
+	for (let i = 0; i < items.length; i++) {
+		if (items[i].id === id) {
+			return { parentId, index: i };
+		}
+		if (items[i].children) {
+			const found = findItemLocation(items[i].children, id, items[i].id);
+			if (found) return found;
+		}
+	}
+	return null;
+}
+
+/**
  * Recursively map over the items tree (immutable).
  *
  * @param {Array}    items Items array.
@@ -60,7 +90,7 @@ function mapItems(items, fn) {
 	for (const item of items) {
 		const mapped = fn(item);
 		if (mapped === false) continue;
-		const newItem = mapped || item;
+		let newItem = mapped || item;
 		if (newItem.children) {
 			newItem = { ...newItem, children: mapItems(newItem.children, fn) };
 		}
@@ -124,6 +154,102 @@ function addChildToParent(items, parentId, newItem) {
 		}
 		return null;
 	});
+}
+
+/**
+ * Insert an item into a parent at a specific index.
+ * If parentId is null, insert at root.
+ *
+ * @param {Array}  items    Items array.
+ * @param {string} parentId Parent ID (or null for root).
+ * @param {Object} newItem  New item to insert.
+ * @param {number} index    Index in the parent's children.
+ * @return {Array} New items array.
+ */
+function insertItemAtIndex(items, parentId, newItem, index) {
+	if (!parentId) {
+		const result = [...items];
+		result.splice(index, 0, newItem);
+		return result;
+	}
+	return mapItems(items, (item) => {
+		if (item.id === parentId) {
+			const children = [...(item.children || [])];
+			children.splice(index, 0, newItem);
+			return { ...item, children };
+		}
+		return null;
+	});
+}
+
+// === Nesting validation (added in v1.1.2 — Spec §3.4.2) ===
+
+/**
+ * Compute the depth of an item in the tree.
+ *
+ * @param {Array}  items Items array.
+ * @param {string} id    Item ID.
+ * @return {number} Depth (0 for root, -1 if not found).
+ */
+function getItemDepth(items, id) {
+	function walk(node, depth) {
+		if (node.id === id) return depth;
+		if (node.children) {
+			for (const child of node.children) {
+				const found = walk(child, depth + 1);
+				if (found >= 0) return found;
+			}
+		}
+		return -1;
+	}
+	for (const root of items) {
+		const d = walk(root, 0);
+		if (d >= 0) return d;
+	}
+	return -1;
+}
+
+/**
+ * Get the item type allowed to be a parent of the given child type.
+ * Spec §3.4.2 — Max depth = 3 (root → mega_container → column → widget/link).
+ *
+ * @param {string} childType  Type of the item being moved.
+ * @param {string} parentType Type of the proposed parent.
+ * @param {string} menuType   Type of the menu (vertical allows accordion_parent).
+ * @return {boolean} True if the parent accepts the child.
+ */
+function isNestingAllowed(childType, parentType, menuType = 'horizontal') {
+	// Root container
+	if (parentType === null) {
+		if (menuType === 'vertical') {
+			return ['link', 'mega_container', 'title', 'separator', 'accordion_parent'].includes(childType);
+		}
+		return ['link', 'mega_container', 'title', 'separator'].includes(childType);
+	}
+	if (parentType === 'mega_container') {
+		return childType === 'column';
+	}
+	if (parentType === 'column') {
+		return ['link', 'title', 'widget', 'separator', 'accordion_parent'].includes(childType);
+	}
+	if (parentType === 'accordion_parent') {
+		return ['link', 'widget'].includes(childType);
+	}
+	// link, widget, title, separator are terminal — cannot have children.
+	return false;
+}
+
+/**
+ * Compute the depth an item would have if placed inside a given parent.
+ * Root parent = depth 0, mega_container = depth 1, column = depth 2, etc.
+ *
+ * @param {Array}  items    Items array.
+ * @param {string} parentId Parent ID (or null).
+ * @return {number} Depth (0 if root parent, 1 if root mega_container, etc.).
+ */
+function getParentDepth(items, parentId) {
+	if (!parentId) return 0;
+	return getItemDepth(items, parentId) + 1;
 }
 
 const actions = {
@@ -195,6 +321,36 @@ const actions = {
 		return { type: 'MOVE_ITEM', id, parentId, index };
 	},
 
+	// === Undo / Redo (added in v1.1.2 — Spec §9.9) ===
+
+	/**
+	 * Undo the last change. Moves the current menu config to `future`
+	 * and restores the most recent from `past`.
+	 *
+	 * @return {Object} Action.
+	 */
+	undo() {
+		return { type: 'UNDO' };
+	},
+
+	/**
+	 * Redo a previously undone change.
+	 *
+	 * @return {Object} Action.
+	 */
+	redo() {
+		return { type: 'REDO' };
+	},
+
+	/**
+	 * Clear all undo/redo history.
+	 *
+	 * @return {Object} Action.
+	 */
+	clearHistory() {
+		return { type: 'CLEAR_HISTORY' };
+	},
+
 	loadMenu(menuId, defaultMenu = null) {
 		return async ({ dispatch, registry }) => {
 			dispatch.setIsLoading(true);
@@ -256,6 +412,7 @@ const actions = {
 				}
 				dispatch.setMenu(savedMenu);
 				dispatch.setDirty(false);
+				dispatch.clearHistory();
 			} catch (err) {
 				dispatch.setError(err.message || __('Erreur lors de la sauvegarde.', 'woo-total-menu'));
 			} finally {
@@ -288,7 +445,31 @@ const selectors = {
 	isDirty(state) {
 		return state.isDirty;
 	},
+	// === Undo/Redo selectors (added in v1.1.2) ===
+	canUndo(state) {
+		return state.past.length > 0;
+	},
+	canRedo(state) {
+		return state.future.length > 0;
+	},
+	getHistorySize(state) {
+		return { past: state.past.length, future: state.future.length };
+	},
 };
+
+/**
+ * Helper: push the current menu config to the past stack (clears future).
+ * Used before any mutating action.
+ *
+ * @param {Object} state Current state.
+ * @return {Object} New state with the current config pushed to past.
+ */
+function pushHistory(state) {
+	if (!state.menu?.config) return state;
+	const MAX_HISTORY = 50;
+	const newPast = [...state.past, state.menu.config].slice(-MAX_HISTORY);
+	return { ...state, past: newPast, future: [] };
+}
 
 const reducer = (state = DEFAULT_STATE, action) => {
 	switch (action.type) {
@@ -304,13 +485,13 @@ const reducer = (state = DEFAULT_STATE, action) => {
 			return { ...state, isDirty: action.isDirty };
 		case 'UPDATE_MENU_TITLE':
 			return {
-				...state,
+				...pushHistory(state),
 				menu: { ...state.menu, title: action.title },
 				isDirty: true,
 			};
 		case 'UPDATE_MENU_CONFIG':
 			return {
-				...state,
+				...pushHistory(state),
 				menu: { ...state.menu, config: action.config },
 				isDirty: true,
 			};
@@ -321,7 +502,7 @@ const reducer = (state = DEFAULT_STATE, action) => {
 			};
 			const items = addChildToParent(state.menu.config.items, action.parentId, newItem);
 			return {
-				...state,
+				...pushHistory(state),
 				menu: {
 					...state.menu,
 					config: { ...state.menu.config, items },
@@ -332,7 +513,7 @@ const reducer = (state = DEFAULT_STATE, action) => {
 		case 'UPDATE_ITEM': {
 			const items = updateItemById(state.menu.config.items, action.id, action.patch);
 			return {
-				...state,
+				...pushHistory(state),
 				menu: {
 					...state.menu,
 					config: { ...state.menu.config, items },
@@ -343,7 +524,7 @@ const reducer = (state = DEFAULT_STATE, action) => {
 		case 'REMOVE_ITEM': {
 			const items = removeItemById(state.menu.config.items, action.id);
 			return {
-				...state,
+				...pushHistory(state),
 				menu: {
 					...state.menu,
 					config: { ...state.menu.config, items },
@@ -358,22 +539,9 @@ const reducer = (state = DEFAULT_STATE, action) => {
 			// Remove from current location.
 			let items = removeItemById(state.menu.config.items, action.id);
 			// Insert at new location.
-			if (!action.parentId) {
-				// Insert at root at given index.
-				items = [...items];
-				items.splice(action.index, 0, itemToMove);
-			} else {
-				items = mapItems(items, (item) => {
-					if (item.id === action.parentId) {
-						const children = [...(item.children || [])];
-						children.splice(action.index, 0, itemToMove);
-						return { ...item, children };
-					}
-					return null;
-				});
-			}
+			items = insertItemAtIndex(items, action.parentId, itemToMove, action.index);
 			return {
-				...state,
+				...pushHistory(state),
 				menu: {
 					...state.menu,
 					config: { ...state.menu.config, items },
@@ -381,13 +549,58 @@ const reducer = (state = DEFAULT_STATE, action) => {
 				isDirty: true,
 			};
 		}
+		// === Undo / Redo cases (added in v1.1.2) ===
+		case 'UNDO': {
+			if (state.past.length === 0) return state;
+			const previous = state.past[state.past.length - 1];
+			const newPast = state.past.slice(0, -1);
+			const newFuture = state.menu?.config
+				? [state.menu.config, ...state.future]
+				: state.future;
+			return {
+				...state,
+				menu: state.menu ? { ...state.menu, config: previous } : state.menu,
+				past: newPast,
+				future: newFuture,
+				isDirty: true,
+			};
+		}
+		case 'REDO': {
+			if (state.future.length === 0) return state;
+			const next = state.future[0];
+			const newFuture = state.future.slice(1);
+			const newPast = state.menu?.config
+				? [...state.past, state.menu.config]
+				: state.past;
+			return {
+				...state,
+				menu: state.menu ? { ...state.menu, config: next } : state.menu,
+				past: newPast,
+				future: newFuture,
+				isDirty: true,
+			};
+		}
+		case 'CLEAR_HISTORY':
+			return { ...state, past: [], future: [] };
 		default:
 			return state;
 	}
 };
 
-// Export helpers for testing.
-export { generateId, findItem, mapItems, updateItemById, removeItemById, addChildToParent };
+// Export helpers for testing and reuse.
+export {
+	generateId,
+	findItem,
+	findItemLocation,
+	mapItems,
+	updateItemById,
+	removeItemById,
+	addChildToParent,
+	insertItemAtIndex,
+	getItemDepth,
+	isNestingAllowed,
+	getParentDepth,
+};
 
 export const WTM_STORE_NAME = 'wtm/menu';
 

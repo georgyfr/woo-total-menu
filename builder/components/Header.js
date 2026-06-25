@@ -1,10 +1,16 @@
 /**
- * Header component — top toolbar with title, device switcher, save button.
+ * Header component — top toolbar with title, device switcher, undo/redo, save.
+ *
+ * v1.1.2 additions:
+ * - Undo/Redo buttons (spec §9.9) — wired to the new past/future stacks in wtm/menu
+ * - Global keyboard shortcuts Ctrl+Z (undo) / Ctrl+Shift+Z or Ctrl+Y (redo)
+ * - Buttons disabled when history stack is empty
  *
  * @package WooTotalMenu
  * @since 1.1.0
  */
 
+import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelect } from '@wordpress/data';
 
@@ -18,9 +24,53 @@ const DEVICE_OPTIONS = [
 ];
 
 export default function Header({ title, menuType, isDirty, isLoading }) {
-	const { saveMenu } = useDispatch(WTM_STORE_NAME);
+	const { saveMenu, undo, redo } = useDispatch(WTM_STORE_NAME);
 	const device = useSelect((select) => select(UI_STORE_NAME).getDevice(), []);
-	const { setDevice } = useDispatch(UI_STORE_NAME);
+	const canUndo = useSelect((select) => select(WTM_STORE_NAME).canUndo(), []);
+	const canRedo = useSelect((select) => select(WTM_STORE_NAME).canRedo(), []);
+	const { setDevice, setAnnouncement } = useDispatch(UI_STORE_NAME);
+
+	// === Global keyboard shortcuts (spec §9.9) ===
+	useEffect(() => {
+		const handleKeyDown = (e) => {
+			// Skip if user is typing in an input/textarea/contenteditable
+			const target = e.target;
+			const isEditingField =
+				target?.tagName === 'INPUT' ||
+				target?.tagName === 'TEXTAREA' ||
+				target?.isContentEditable;
+			if (isEditingField) return;
+
+			// Ctrl+Z or Cmd+Z = Undo
+			// Ctrl+Shift+Z or Cmd+Shift+Z or Ctrl+Y = Redo
+			const isUndo = (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z';
+			const isRedo = ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z')
+				|| ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y');
+
+			if (isUndo && canUndo) {
+				e.preventDefault();
+				undo();
+				setAnnouncement(__('Action annulée.', 'woo-total-menu'));
+			} else if (isRedo && canRedo) {
+				e.preventDefault();
+				redo();
+				setAnnouncement(__('Action rétablie.', 'woo-total-menu'));
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [canUndo, canRedo, undo, redo, setAnnouncement]);
+
+	const handleUndo = () => {
+		undo();
+		setAnnouncement(__('Action annulée.', 'woo-total-menu'));
+	};
+
+	const handleRedo = () => {
+		redo();
+		setAnnouncement(__('Action rétablie.', 'woo-total-menu'));
+	};
 
 	return (
 		<header className="wtm-builder__header">
@@ -34,6 +84,29 @@ export default function Header({ title, menuType, isDirty, isLoading }) {
 			</div>
 
 			<div className="wtm-builder__header-center">
+				<div className="wtm-builder__history">
+					<button
+						type="button"
+						className="wtm-builder__history-btn"
+						onClick={handleUndo}
+						disabled={!canUndo}
+						title={__('Annuler (Ctrl+Z)', 'woo-total-menu')}
+						aria-label={__('Annuler', 'woo-total-menu')}
+					>
+						<span className="dashicons dashicons-undo"></span>
+					</button>
+					<button
+						type="button"
+						className="wtm-builder__history-btn"
+						onClick={handleRedo}
+						disabled={!canRedo}
+						title={__('Rétablir (Ctrl+Shift+Z)', 'woo-total-menu')}
+						aria-label={__('Rétablir', 'woo-total-menu')}
+					>
+						<span className="dashicons dashicons-redo"></span>
+					</button>
+				</div>
+
 				<div className="wtm-builder__devices">
 					{DEVICE_OPTIONS.map((opt) => (
 						<button

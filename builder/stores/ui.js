@@ -1,6 +1,11 @@
 /**
  * wtm/ui store — handles UI state (selected item, device, REST config).
  *
+ * v1.1.2 additions:
+ * - `announcement` string for aria-live screen reader announcements
+ * - `setAnnouncement(msg)` action
+ * - `getAnnouncement` selector
+ *
  * @package WooTotalMenu
  * @since 1.1.0
  */
@@ -12,6 +17,8 @@ const DEFAULT_STATE = {
 	device: 'desktop',
 	restUrl: '',
 	restNonce: '',
+	// v1.1.2 — aria-live announcements for screen readers (spec §6.7)
+	announcement: '',
 };
 
 const actions = {
@@ -23,6 +30,23 @@ const actions = {
 	},
 	setRestConfig({ restUrl, restNonce }) {
 		return { type: 'SET_REST_CONFIG', restUrl, restNonce };
+	},
+	/**
+	 * Set the screen reader announcement message.
+	 *
+	 * @param {string} msg Announcement message.
+	 * @return {Object} Action.
+	 */
+	setAnnouncement(msg) {
+		return { type: 'SET_ANNOUNCEMENT', msg };
+	},
+	/**
+	 * Clear the announcement.
+	 *
+	 * @return {Object} Action.
+	 */
+	clearAnnouncement() {
+		return { type: 'SET_ANNOUNCEMENT', msg: '' };
 	},
 };
 
@@ -39,6 +63,9 @@ const selectors = {
 	getRestNonce(state) {
 		return state.restNonce;
 	},
+	getAnnouncement(state) {
+		return state.announcement;
+	},
 };
 
 const reducer = (state = DEFAULT_STATE, action) => {
@@ -53,6 +80,8 @@ const reducer = (state = DEFAULT_STATE, action) => {
 				restUrl: action.restUrl,
 				restNonce: action.restNonce,
 			};
+		case 'SET_ANNOUNCEMENT':
+			return { ...state, announcement: action.msg };
 		default:
 			return state;
 	}

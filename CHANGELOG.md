@@ -5,6 +5,89 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-06-25
+
+### Added
+
+- **Drag & drop arborescent complet** via `@dnd-kit/core` + `@dnd-kit/sortable` :
+  - Réordonnancement d'items au même niveau
+  - Déplacement d'items entre niveaux (root → mega_container → column)
+  - Nesting automatique d'un item dans un container (mega_container, column, accordion_parent)
+  - Validation des règles de nesting en temps réel (spec §3.4.2)
+- **Indicateurs visuels de drop** (spec §6.3.2) :
+  - "before" : ligne bleue 2px au-dessus de l'item survolé
+  - "after" : ligne bleue 2px en-dessous
+  - "inside" : bordure pointillée bleue + fond légèrement teinté
+  - Indicateur désactivé pour les drops invalides (pas de ligne fantôme)
+- **Drag handle** (icône ⠿ six-dot) sur chaque item, séparé du bouton principal (spec §6.3.1)
+- **Ghost overlay** qui suit le curseur pendant le drag, affichant l'icône et le label de l'item déplacé
+- **Auto-expand** des containers repliés après 500ms de survol pendant le drag (spec §6.3.2)
+- **Raccourcis clavier pour réorganiser** (spec §6.3.5) :
+  - `Ctrl+↑` / `Ctrl+↓` : déplacer l'item parmi ses frères
+  - `Ctrl+→` : indenter (l'item devient enfant du frère précédent)
+  - `Ctrl+←` : outdenter (l'item rejoint la liste des frères de son parent, juste après celui-ci)
+- **Undo/Redo** avec stacks `past`/`future` dans le store `wtm/menu` (spec §9.9) :
+  - Boutons Annuler / Rétablir dans le header (icônes `dashicons-undo` et `dashicons-redo`)
+  - Désactivés quand la stack correspondante est vide
+  - Raccourcis : `Ctrl+Z` (undo), `Ctrl+Shift+Z` ou `Ctrl+Y` (redo)
+  - Chaque action mutating (ADD_ITEM, UPDATE_ITEM, REMOVE_ITEM, MOVE_ITEM, UPDATE_MENU_TITLE, UPDATE_MENU_CONFIG) pousse un snapshot dans `past` et vide `future`
+  - Maximum 50 snapshots conservés (FIFO)
+  - `clearHistory()` appelé après chaque sauvegarde REST réussie
+- **Annonces ARIA `aria-live="polite"`** après chaque déplacement pour les lecteurs d'écran (spec §6.7) :
+  - « « Femmes » déplacé en position 2 dans Catégories. »
+  - « Action annulée. » / « Action rétablie. »
+  - « Déplacement invalide : la cible ne peut pas contenir cet élément. »
+- **Validation des règles de nesting** (spec §3.4.2) :
+  - `mega_container` accepte uniquement `column`
+  - `column` accepte `link`, `title`, `widget`, `separator`, `accordion_parent`
+  - `accordion_parent` (menu vertical) accepte `link` et `widget`
+  - `link`, `widget`, `title`, `separator` sont terminaux (pas d'enfants)
+  - Profondeur maximale = 3 (root → mega_container → column → widget/link)
+- **Helper `dnd-helpers.js`** avec :
+  - `computeDropPosition(cursorY, rect, canContainChildren)` — calcule before/after/inside selon la position du curseur
+  - `isValidDrop({draggedItem, targetItem, targetDepth, menuType, position, isAncestor})` — valide un drop
+  - `computeMoveTarget(...)` — calcule le parentId et l'index finaux à passer à `moveItem`
+  - `isAncestorOf(items, ancestorId, descendantId)` — empêche de dropper un item dans son propre descendant
+- **Helpers store étendus** : `findItemLocation`, `insertItemAtIndex`, `getItemDepth`, `isNestingAllowed`, `getParentDepth`
+
+### Changed
+
+- **`builder/stores/menu.js`** :
+  - État étendu avec `past: []` et `future: []` (max 50 entrées)
+  - Nouvelles actions : `undo()`, `redo()`, `clearHistory()`
+  - Nouveaux sélecteurs : `canUndo(state)`, `canRedo(state)`, `getHistorySize(state)`
+  - Nouveau helper interne `pushHistory(state)` appelé avant chaque mutation
+  - `saveMenu()` appelle `clearHistory()` après succès
+- **`builder/stores/ui.js`** :
+  - État étendu avec `announcement: ''`
+  - Nouvelles actions : `setAnnouncement(msg)`, `clearAnnouncement()`
+  - Nouveau sélecteur : `getAnnouncement(state)`
+- **`builder/components/Header.js`** :
+  - Ajout des boutons Undo/Redo entre le titre et le device switcher
+  - Hook `useEffect` global pour les raccourcis clavier Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y
+  - Boutons désactivés quand `!canUndo` / `!canRedo`
+- **`builder/components/TreePanel.js`** :
+  - Refonte complète pour utiliser `DndContext` + `PointerSensor` + `KeyboardSensor` de `@dnd-kit/core`
+  - Gestion du `DragOverlay` (ghost qui suit le curseur)
+  - Calcul de la position de drop et dispatch de `moveItem` dans `handleDragEnd`
+  - Annonce ARIA après chaque drop
+- **`builder/components/SortableTreeItem.js`** (nouveau fichier) :
+  - Item d'arbre avec `useSortable` de `@dnd-kit/sortable`
+  - Drag handle, bouton toggle expand/collapse, indicateurs de drop
+  - Gestion des raccourcis Ctrl+Arrow pour réorganiser
+  - Auto-expand au survol pendant 500ms
+- **`builder/style.css`** : +173 lignes pour les nouveaux composants (drag handle, drop indicators, drag overlay, undo/redo buttons, sr-announcement)
+- **`package.json`** :
+  - Version bump `1.1.0` → `1.1.2`
+  - Ajout des dépendances : `@dnd-kit/core@^6.3.1`, `@dnd-kit/sortable@^10.0.0`, `@dnd-kit/utilities@^3.2.2`, `@dnd-kit/modifiers@^9.0.0`
+  - Ajout d'`overrides` pour forcer `ajv@^8.17.1` et `ajv-keywords@^5.1.0` (résolution conflit webpack)
+- **Build bundle** : 28.6 Ko → 85.7 Ko (JS), 11.9 Ko → 14.3 Ko (CSS)
+
+### Fixed
+
+- **🚨 Bug critique `mapItems()`** dans `builder/stores/menu.js:63-65` : la variable `newItem` était déclarée `const` puis réassignée (`newItem = { ...newItem, children: ... }`), ce qui déclenchait une `TypeError: Assignment to constant variable.` dès qu'un item avec `children` était muté. Conséquence : toute opération `ADD_ITEM`, `UPDATE_ITEM`, `REMOVE_ITEM` ou `MOVE_ITEM` sur un arbre non-root crashait le builder. Correctif : `const newItem` → `let newItem`.
+- **`moveItem` reducer** : réécrit pour utiliser le nouveau helper `insertItemAtIndex()` au lieu d'un `mapItems` imbriqué qui créait des enfants mal positionnés. L'index d'insertion est maintenant calculé correctement en tenant compte du retrait préalable de l'item déplacé.
+
 ## [1.1.1] - 2026-06-24
 
 ### Added
