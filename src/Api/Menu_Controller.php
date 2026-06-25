@@ -506,32 +506,67 @@ class Menu_Controller {
 
                 $update_args = array( 'ID' => $post_id );
 
-                if ( null !== $request->get_param( 'title' ) ) {
+                // v1.1.5 — Important: the route args declare `default` values for
+                // title/menu_type/location/config/header_config/footer_config.
+                // That means `$request->get_param('config')` returns the default
+                // (NOT null) when the field is not in the request body, and
+                // `$request->has_param('config')` ALSO returns true (because the
+                // default is added to the params). To detect "field actually
+                // provided by client in the JSON body", we use
+                // `$request->get_json_params()` and `isset()`. Otherwise every PUT
+                // without `config` would silently reset the config to the empty
+                // default — a regression from v1.1.4 (where Meta_Boxes was not
+                // instantiated in REST context, so sanitize_callback was inactive).
+                $json_params = $request->get_json_params();
+
+                if ( isset( $json_params['title'] ) ) {
                         $update_args['post_title'] = sanitize_text_field( $request->get_param( 'title' ) );
                 }
-                if ( null !== $request->get_param( 'slug' ) ) {
+                if ( isset( $json_params['slug'] ) ) {
                         $update_args['post_name'] = sanitize_title( $request->get_param( 'slug' ) );
                 }
-                if ( null !== $request->get_param( 'status' ) ) {
+                if ( isset( $json_params['status'] ) ) {
                         $update_args['post_status'] = sanitize_key( $request->get_param( 'status' ) );
                 }
 
-                $result = wp_update_post( $update_args, true );
-                if ( is_wp_error( $result ) ) {
-                        return $result;
-                }
+                // v1.1.5 — spec §6.6, §7.6 : each save must create a WordPress
+                // revision so the History panel can list it. WordPress only creates
+                // a revision when a *post field* (title, content, excerpt, etc.)
+                // changes — meta-only changes do NOT trigger a revision.
+                // To work around this, we store a short signature derived from the
+                // config in `post_content` so WP core's `wp_save_post_revision()`
+                // always fires on save.
+                $config_for_signature = isset( $json_params['config'] )
+                        ? $json_params['config']
+                        : ( get_post_meta( $post_id, '_wtm_config', true ) ?: '' );
+                $signature = is_string( $config_for_signature )
+                        ? $config_for_signature
+                        : wp_json_encode( $config_for_signature );
+                $update_args['post_content'] = 'wtm:' . substr( md5( (string) $signature ), 0, 16 ) . ':' . time();
 
-                // Update meta.
-                if ( null !== $request->get_param( 'menu_type' ) ) {
+                // === CRITICAL ORDERING (v1.1.5) ===
+                // We must update the META BEFORE calling wp_update_post, because
+                // wp_update_post internally calls wp_save_post_revision which
+                // _wp_copy_post_meta_to_revision — and that copies the parent's
+                // CURRENT meta to the revision. If we update the meta AFTER
+                // wp_update_post, the revision captures the OLD meta, not the new
+                // one — making the History panel useless (every revision would
+                // show the previous state instead of the state at save time).
+                //
+                // So: update meta first, then wp_update_post (which creates the
+                // revision from the now-updated parent state).
+
+                // Update meta — only if explicitly provided in the request body.
+                if ( isset( $json_params['menu_type'] ) ) {
                         update_post_meta( $post_id, '_wtm_menu_type', sanitize_key( $request->get_param( 'menu_type' ) ) );
                 }
-                if ( null !== $request->get_param( 'location' ) ) {
+                if ( isset( $json_params['location'] ) ) {
                         update_post_meta( $post_id, '_wtm_location', sanitize_key( $request->get_param( 'location' ) ) );
                 }
 
                 // Update config (with validation).
-                if ( null !== $request->get_param( 'config' ) ) {
-                        $config = $request->get_param( 'config' );
+                if ( isset( $json_params['config'] ) ) {
+                        $config = $json_params['config'];
                         $config_decoded = is_string( $config )
                                 ? Schema_Validator::decode_and_validate_config( $config )
                                 : Schema_Validator::decode_and_validate_config( wp_json_encode( $config ) );
@@ -541,8 +576,8 @@ class Menu_Controller {
                         update_post_meta( $post_id, '_wtm_config', wp_slash( wp_json_encode( $config_decoded ) ) );
                 }
 
-                if ( null !== $request->get_param( 'header_config' ) ) {
-                        $header = $request->get_param( 'header_config' );
+                if ( isset( $json_params['header_config'] ) ) {
+                        $header = $json_params['header_config'];
                         if ( '' === $header || null === $header ) {
                                 delete_post_meta( $post_id, '_wtm_header_config' );
                         } else {
@@ -556,8 +591,8 @@ class Menu_Controller {
                         }
                 }
 
-                if ( null !== $request->get_param( 'footer_config' ) ) {
-                        $footer = $request->get_param( 'footer_config' );
+                if ( isset( $json_params['footer_config'] ) ) {
+                        $footer = $json_params['footer_config'];
                         if ( '' === $footer || null === $footer ) {
                                 delete_post_meta( $post_id, '_wtm_footer_config' );
                         } else {
@@ -569,6 +604,14 @@ class Menu_Controller {
                                 }
                                 update_post_meta( $post_id, '_wtm_footer_config', wp_slash( wp_json_encode( $footer_decoded ) ) );
                         }
+                }
+
+                // Now call wp_update_post — this will create a revision that
+                // captures the JUST-UPDATED meta as well as the new post_content
+                // signature.
+                $result = wp_update_post( $update_args, true );
+                if ( is_wp_error( $result ) ) {
+                        return $result;
                 }
 
                 // Invalidate cache.

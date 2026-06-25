@@ -27,7 +27,7 @@ Chaque fichier `vX.Y.Z.md` décrit :
 | [v1.1.2](./v1.1.2.md) | 2026-06-25 | ✅ Livrée | Drag & drop arborescent + Undo/Redo + raccourcis clavier + a11y ARIA |
 | [v1.1.3](./v1.1.3.md) | 2026-06-25 | ✅ Livrée | Fixes UX : indicateur drop temps réel + migration React 18 createRoot + annonce ARIA unique |
 | [v1.1.4](./v1.1.4.md) | 2026-06-25 | ✅ Livrée | Live preview via iframe + postMessage (debounce 250 ms, modes responsive desktop/tablet/mobile) |
-| v1.1.5 | à venir | 📋 Planifiée | Undo/Redo révisions WordPress + historique |
+| [v1.1.5](./v1.1.5.md) | 2026-06-25 | ✅ Livrée | Historique des révisions WordPress — modal Historique, 3 routes REST, filtre `wtm_max_revisions`, prévisualisation de révision, restauration avec confirmation |
 | v1.2.x | à venir | 📋 Planifiée | Rendu frontend (Menu_Walker, méga menu, off-canvas mobile) |
 | v1.3.x | à venir | 📋 Planifiée | Widgets WooCommerce (catégories, produits, mini-panier) |
 | v1.4.x | à venir | 📋 Planifiée | Header & Footer Builder |

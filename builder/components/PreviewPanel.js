@@ -49,6 +49,12 @@ export default function PreviewPanel() {
                 (select) => select(UI_STORE_NAME).getPreviewFrameUrl(),
                 []
         );
+        // v1.1.5 — when set, the preview shows this revision instead of the live config.
+        const previewRevisionId = useSelect(
+                (select) => select(UI_STORE_NAME).getPreviewRevisionId(),
+                []
+        );
+        const revisions = useSelect((select) => select(WTM_STORE_NAME).getRevisions(), []);
 
         const iframeRef = useRef(null);
         const sendTimerRef = useRef(null);
@@ -88,23 +94,33 @@ export default function PreviewPanel() {
                 return () => window.removeEventListener('message', onMessage);
         }, [menu, device, sendToIframe]);
 
+        // === v1.1.5 — Compute the effective config: live menu OR previewed revision ===
+        const previewRevision = previewRevisionId
+                ? revisions.find((r) => r.id === previewRevisionId)
+                : null;
+        const effectiveConfig = previewRevision?.config || menu?.config;
+
         // === Debounced postMessage on menu or device change ===
         useEffect(() => {
-                if (!menu) return;
+                if (!menu || !effectiveConfig) return;
                 // Skip if config hasn't changed (deep-ish compare via JSON).
-                const snapshot = JSON.stringify({ config: menu.config, device });
+                const snapshot = JSON.stringify({
+                        config: effectiveConfig,
+                        device,
+                        previewRevisionId,
+                });
                 if (lastConfigRef.current === snapshot) return;
                 lastConfigRef.current = snapshot;
 
                 if (sendTimerRef.current) clearTimeout(sendTimerRef.current);
                 sendTimerRef.current = setTimeout(() => {
-                        sendToIframe(menu, device);
+                        sendToIframe({ ...menu, config: effectiveConfig }, device);
                 }, DEBOUNCE_MS);
 
                 return () => {
                         if (sendTimerRef.current) clearTimeout(sendTimerRef.current);
                 };
-        }, [menu, device, sendToIframe]);
+        }, [menu, effectiveConfig, device, previewRevisionId, sendToIframe]);
 
         // === When device changes, also send immediately (no debounce) so the
         // device class on <body> updates instantly for the user.
@@ -131,6 +147,12 @@ export default function PreviewPanel() {
                                         <span className="dashicons dashicons-visibility"></span>
                                         {__('Aperçu', 'woo-total-menu')}
                                 </h2>
+                                {previewRevisionId && (
+                                        <span className="wtm-preview__revision-pill">
+                                                <span className="dashicons dashicons-backup"></span>
+                                                {__('Révision', 'woo-total-menu')} #{previewRevisionId}
+                                        </span>
+                                )}
                                 <span className="wtm-preview__device-pill">
                                         {device === 'desktop' && __('Bureau', 'woo-total-menu')}
                                         {device === 'tablet' && __('Tablette', 'woo-total-menu')}

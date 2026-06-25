@@ -5,6 +5,106 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2026-06-25
+
+### Added
+
+- **Historique des révisions WordPress** (spec §6.6, §7.6, §9.9) : chaque
+  sauvegarde du Builder crée désormais une révision WordPress du CPT
+  `wtm_menu`, capturant à la fois les champs du post (titre, statut) et les
+  6 métadonnées WTM (`_wtm_config`, `_wtm_menu_type`, `_wtm_location`,
+  `_wtm_header_config`, `_wtm_footer_config`, `_wtm_version`). L'utilisateur
+  peut lister, prévisualiser et restaurer n'importe quelle révision passée
+  depuis un nouveau modal « Historique » dans le Builder.
+  - Nouveau controller REST `Revisions_Controller.php` exposant 3 routes :
+    - `GET /wtm/v1/menus/{id}/revisions` — liste paginée avec `X-WP-Total` /
+      `X-WP-TotalPages` ; chaque item contient l'auteur, la date relative,
+      le nombre d'items (comptage récursif) et le snapshot complet du config
+      décodé en JSON.
+    - `GET /wtm/v1/menus/{id}/revisions/{revision_id}` — récupère une
+      révision spécifique avec son snapshot.
+    - `POST /wtm/v1/menus/{id}/revisions/{revision_id}/restore` — restaure
+      la révision : appelle `wp_restore_post_revision()` (qui ne restaure
+      que les post fields) puis copie manuellement les 6 meta WTM depuis
+      la révision vers le post parent via `update_post_meta()`. Le hook
+      `wp_restore_post_revision` (déclaré dans `Meta_Boxes`) fait la même
+      chose pour les restaurations effectuées en dehors du Builder.
+  - Nouveau filtre `wtm_max_revisions` (défaut 10, spec §7.6) appliqué via
+    le hook `wp_revisions_to_keep` sur le CPT `wtm_menu`. Les
+    administrateurs peuvent l'ajuster via un `add_filter()` classique.
+  - Les 6 meta WTM sont désormais enregistrées avec
+    `revisions_enabled => true` (WP 6.4+) ET hookées via le filtre
+    `_wp_post_revision_meta_keys` pour double robustesse.
+  - Nouveau composant `HistoryPanel.js` : modal centré avec overlay,
+    fermeture par Escape / clic backdrop / bouton Close, liste scrollable
+    des révisions. Chaque ligne affiche : avatar de l'auteur (32px,
+    Gravatar), nom, date relative (« il y a 5 min »), nombre d'items,
+    et un bouton « Restaurer » qui déclenche un inline confirm.
+  - **Prévisualisation de révision** : cliquer une ligne du modal envoie
+    la config de la révision à l'iframe de preview via `postMessage`,
+    sans toucher à l'état live du menu. Un pill « Révision #N » jaune
+    s'affiche dans le header du panneau de preview pour indiquer qu'on
+    est en mode aperçu révision. Recliquer la ligne revient à la config
+    live.
+  - **Flow de restauration** : bouton « Restaurer » → bannière de
+    confirmation inline (jaune « Restaurer cette révision ? » avec
+    boutons Confirmer / Annuler) → appel `POST .../restore` → le menu
+    est remplacé par la version restaurée → `clearHistory()` est appelé
+    pour vider les piles undo/redo locales (la timeline a changé
+    serveur-side) → fermeture du modal après 600 ms.
+  - Store `wtm/menu` étendu avec `revisions: []`, `isLoadingRevisions:
+    false`, `isRestoring: false` + actions `loadRevisions(menuId)`,
+    `restoreRevision(menuId, revisionId)`, `setRevisions()`,
+    `setIsLoadingRevisions()`, `setIsRestoring()` + sélecteurs associés.
+  - Store `wtm/ui` étendu avec `isHistoryOpen: false`,
+    `previewRevisionId: null` + actions `openHistory()`, `closeHistory()`,
+    `setPreviewRevision(revisionId)` + sélecteurs associés.
+
+### Changed
+
+- **`Menu_Controller::update_menu()`** — désormais, chaque save écrit une
+  signature dérivée du config (`wtm:<md5>:<timestamp>`) dans le champ
+  `post_content`. C'est nécessaire car WordPress ne crée une révision que
+  si un *post field* change ; les modifications meta-only n'en créaient
+  aucune. Cette astuce garantit qu'une révision est toujours créée sur
+  chaque save du Builder, ce qui rend l'historique utilisable.
+- **`Header.js`** — un 3e bouton « Historique » (icône
+  `dashicons-backup`) est ajouté dans le group undo/redo, désactivé pour
+  les nouveaux menus non sauvegardés (`!menu?.id`) ou pendant le
+  chargement. Cliquer ouvre le modal et déclenche
+  `loadRevisions(menu.id)`.
+- **`PreviewPanel.js`** — étendu pour calculer `effectiveConfig` (config
+  live OU config de la révision prévisualisée) et l'envoyer à l'iframe
+  via `postMessage`. Le debounce 250 ms est conservé.
+- **`Meta_Boxes.php`** — `register_meta()` ajoute
+  `revisions_enabled => true` sur les 6 meta WTM (pour WP 6.4+) ; deux
+  nouveaux hooks sont enregistrés dans le constructor :
+  `_wp_post_revision_meta_keys` (déclare les meta comme
+  revision-persisted) et `wp_restore_post_revision` (restaure les meta
+  WTM après une restauration de révision côté WP core).
+- **`CPT_Manager.php`** — nouveau hook `wp_revisions_to_keep` applique
+  le filtre `wtm_max_revisions` (défaut 10, spec §7.6) sur le CPT
+  `wtm_menu`.
+- **`Bootstrap.php`** — instancie `Revisions_Controller` sur chaque
+  requête (REST doit être disponible même quand `is_admin()` est false).
+- **`Requires at least`** — 6.3 → 6.4 dans `readme.txt` et
+  `woo-total-menu.php`. Nécessaire pour le paramètre `revisions_enabled`
+  de `register_post_meta()` (ajouté dans WP 6.4), aligné avec spec §7.6
+  qui mentionne explicitement WP 6.4.
+- Bump version 1.1.4 → 1.1.5 (`woo-total-menu.php`, `package.json`,
+  `readme.txt`).
+
+### Security
+
+- Les routes REST `revisions/*` requièrent toutes la capacité
+  `wtm_manage_menus` via `permission_callback`. Un utilisateur non
+  authentifié ou sans la capacité obtient une erreur 401/403.
+- `restore_revision` vérifie que la révision appartient bien au menu
+  parent (`post_parent === $post_id`) avant toute restauration.
+- Le hook `wp_restore_post_revision` ne restaure les meta WTM que si le
+  post parent est bien de type `wtm_menu` (pas de fuite vers d'autres
+  CPT).
+
 ## [1.1.4] - 2026-06-25
 
 ### Added

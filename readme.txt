@@ -1,10 +1,10 @@
 === Woo Total Menu ===
 Contributors: woo-total-menu-team
 Tags: menu, mega menu, header, footer, woocommerce, navigation, builder
-Requires at least: 6.3
+Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,28 @@ Oui. Woo Total Menu est pensé en priorité pour les boutiques WooCommerce. Une 
 Non. La v1.0.0 pose les fondations techniques. Les premières fonctionnalités visibles arrivent en v1.0.1 (Custom Post Type) et v1.1.0 (Builder visuel).
 
 == Changelog ==
+
+= 1.1.5 =
+* New: Historique des révisions WordPress — chaque sauvegarde crée désormais une révision du menu CPT (spec §6.6, §7.6). Le bouton "Historique" (icône dashicons-backup) dans le header ouvre un modal listant les révisions passées avec auteur, date relative, et nombre d'items.
+* New: Endpoint REST GET /wtm/v1/menus/{id}/revisions — liste les révisions paginées d'un menu avec métadonnées WTM décodées (_wtm_config, _wtm_menu_type, _wtm_location, _wtm_header_config, _wtm_footer_config, _wtm_version)
+* New: Endpoint REST GET /wtm/v1/menus/{id}/revisions/{revision_id} — récupère une révision spécifique avec son snapshot de configuration complet
+* New: Endpoint REST POST /wtm/v1/menus/{id}/revisions/{revision_id}/restore — restaure une révision : appelle wp_restore_post_revision() puis copie manuellement les métadonnées WTM depuis la révision vers le post parent (WP core ne restaure pas les meta automatiquement)
+* New: Filter `wtm_max_revisions` (valeur par défaut 10) — appliqué via wp_revisions_to_keep sur le CPT wtm_menu (spec §7.6)
+* New: Toutes les 6 meta WTM sont désormais enregistrées avec `revisions_enabled => true` (WP 6.4+) et hookées via le filter `_wp_post_revision_meta_keys` pour compatibilité avec WP 6.3
+* New: Action `wp_restore_post_revision` hookée pour restaurer les meta WTM en plus des post fields
+* New: Composant HistoryPanel.js — modal React avec overlay, backdrop click close, Escape close, liste scrollable, avatar auteur, date relative, compteur d'items, badge "Aperçu" sur la révision actuellement prévisualisée
+* New: Prévisualisation de révision — cliquer une ligne du modal envoie la config de la révision dans l'iframe de preview via postMessage, sans toucher à l'état live du menu. Un pill "Révision #N" s'affiche dans le header du panneau de preview.
+* New: Flow de restauration avec confirmation inline (bouton "Restaurer" → confirmation → appel API → remplacement de l'état menu → clear de l'undo/redo local → fermeture du modal)
+* New: Store wtm/menu étendu avec `revisions`, `isLoadingRevisions`, `isRestoring` + actions `loadRevisions(menuId)`, `restoreRevision(menuId, revisionId)`, `setRevisions()`, `setIsLoadingRevisions()`, `setIsRestoring()`
+* New: Store wtm/ui étendu avec `isHistoryOpen`, `previewRevisionId` + actions `openHistory()`, `closeHistory()`, `setPreviewRevision(revisionId)`
+* Update: Header.js ajoute un 3e bouton "Historique" dans le group undo/redo (dashicons-backup), disabled pour les nouveaux menus non sauvegardés
+* Update: PreviewPanel.js étendu pour utiliser `effectiveConfig` (config live OU config d'une révision prévisualisée) dans le postMessage envoyé à l'iframe
+* Update: Menu_Controller::update_menu() écrit désormais une signature dérivée du config dans `post_content` pour garantir qu'une révision est créée à chaque save (sinon WP ne crée pas de révision sur changements meta-only)
+* Update: Meta_Boxes.php — `register_meta()` ajoute `revisions_enabled => true` sur les 6 meta WTM ; nouveaux hooks `_wp_post_revision_meta_keys` et `wp_restore_post_revision`
+* Update: CPT_Manager.php — hook `wp_revisions_to_keep` applique le filter `wtm_max_revisions` (défaut 10) sur le CPT wtm_menu
+* Update: Bootstrap.php instancie Revisions_Controller sur chaque requête
+* Update: Bump Requires at least 6.3 → 6.4 (nécessaire pour `revisions_enabled` sur register_post_meta, aligné avec spec §7.6 qui mentionne WP 6.4)
+* Update: Bump version 1.1.4 → 1.1.5 (woo-total-menu.php, package.json, readme.txt)
 
 = 1.1.4 =
 * New: Live preview via iframe + postMessage — le panneau central du Builder affiche maintenant un aperçu en direct du menu (remplace le placeholder statique de v1.1.0)

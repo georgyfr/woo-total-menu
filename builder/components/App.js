@@ -13,6 +13,7 @@ import Header from './Header';
 import TreePanel from './TreePanel';
 import PreviewPanel from './PreviewPanel';
 import PropertiesPanel from './PropertiesPanel';
+import HistoryPanel from './HistoryPanel';
 import { WTM_STORE_NAME } from '../stores/menu';
 import { UI_STORE_NAME } from '../stores/ui';
 
@@ -72,6 +73,8 @@ export default function App({ initialState }) {
                                         <PropertiesPanel />
                                 </div>
                         </div>
+
+                        <HistoryPanel />
                 </div>
         );
 }

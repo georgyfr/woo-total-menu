@@ -59,11 +59,38 @@ class CPT_Manager {
 
         /**
          * Constructor — registers hooks.
+         *
+         * v1.1.5: hooks `wp_revisions_to_keep` to apply the `wtm_max_revisions`
+         * filter (default 10, per spec §7.6) on the wtm_menu CPT.
          */
         public function __construct() {
                 add_action( 'init', array( $this, 'register_post_type' ), 5 );
                 add_action( 'init', array( $this, 'register_locations' ), 10 );
                 add_filter( 'wp_insert_post_data', array( $this, 'default_menu_type_on_insert' ), 10, 2 );
+                add_filter( 'wp_revisions_to_keep', array( $this, 'filter_revisions_to_keep' ), 10, 2 );
+        }
+
+        /**
+         * Limit the number of revisions kept for wtm_menu posts.
+         *
+         * Spec §7.6 — default 10 revisions, filterable via `wtm_max_revisions`.
+         *
+         * @param int      $num  Number of revisions to keep (default WP_SETTING).
+         * @param \WP_Post $post Post being saved.
+         * @return int
+         */
+        public function filter_revisions_to_keep( $num, $post ) {
+                if ( $post && self::POST_TYPE === $post->post_type ) {
+                        /**
+                         * Filter the maximum number of revisions kept for WTM menus.
+                         *
+                         * @since 1.1.5
+                         * @param int $num Default 10.
+                         * @param \WP_Post $post Menu post.
+                         */
+                        return (int) apply_filters( 'wtm_max_revisions', 10, $post );
+                }
+                return $num;
         }
 
         /**

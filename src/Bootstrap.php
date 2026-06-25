@@ -106,6 +106,9 @@ class Bootstrap {
                 // API REST (loaded on every request including AJAX).
                 $this->services['rest_menus']  = new \WooTotalMenu\Api\Menu_Controller();
 
+                // v1.1.5 — Revisions REST controller (/wtm/v1/menus/{id}/revisions…).
+                $this->services['rest_revisions'] = new \WooTotalMenu\Api\Revisions_Controller();
+
                 // v1.1.4 — Preview iframe controller (REST /wtm/v1/preview-frame).
                 // Loaded on every request so the iframe document is reachable
                 // via REST even when is_admin() is false (the iframe loads
@@ -115,8 +118,20 @@ class Bootstrap {
                 // Admin (only in wp-admin context).
                 if ( is_admin() ) {
                         $this->services['admin_menu']  = new \WooTotalMenu\Admin\Admin_Menu();
-                        $this->services['meta_boxes']  = new \WooTotalMenu\Admin\Meta_Boxes();
                 }
+
+                // Meta_Boxes is instantiated on every request (not just is_admin)
+                // because it is responsible for:
+                //   - register_meta() — must run on every request so the REST API
+                //     knows the meta schema.
+                //   - _wp_post_revision_meta_keys filter — must be registered on
+                //     every request so revisions created via REST have the WTM
+                //     meta copied over (v1.1.5 — spec §7.6).
+                //   - wp_restore_post_revision action — must fire on every request
+                //     so REST restore properly restores the WTM meta.
+                // The admin-only hooks (add_meta_boxes, save_post_*) are simply
+                // never triggered outside wp-admin, so they are harmless.
+                $this->services['meta_boxes']  = new \WooTotalMenu\Admin\Meta_Boxes();
 
                 // Frontend rendering.
                 if ( ! is_admin() || wp_doing_ajax() ) {
