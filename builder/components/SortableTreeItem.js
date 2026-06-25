@@ -306,6 +306,22 @@ export default function SortableTreeItem({
 					<span className="dashicons dashicons-screenoptions"></span>
 				</button>
 
+				{/* Expand/collapse toggle — separate button to avoid nested <button> (invalid HTML) */}
+				{canHaveChildren && hasChildren && (
+					<button
+						type="button"
+						className="wtm-tree__toggle"
+						onClick={(e) => {
+							e.stopPropagation();
+							setIsExpanded(!isExpanded);
+						}}
+						aria-label={isExpanded ? __('Réduire', 'woo-total-menu') : __('Déplier', 'woo-total-menu')}
+						aria-expanded={isExpanded}
+					>
+						<span className={`dashicons dashicons-${isExpanded ? 'arrow-down' : 'arrow-right'}`}></span>
+					</button>
+				)}
+
 				{/* Main item button */}
 				<button
 					type="button"
@@ -315,20 +331,6 @@ export default function SortableTreeItem({
 					onKeyDown={handleKeyDown}
 					aria-selected={isSelected}
 				>
-					{canHaveChildren && hasChildren && (
-						<button
-							type="button"
-							className="wtm-tree__toggle"
-							onClick={(e) => {
-								e.stopPropagation();
-								setIsExpanded(!isExpanded);
-							}}
-							aria-label={isExpanded ? __('Réduire', 'woo-total-menu') : __('Déplier', 'woo-total-menu')}
-							aria-expanded={isExpanded}
-						>
-							<span className={`dashicons dashicons-${isExpanded ? 'arrow-down' : 'arrow-right'}`}></span>
-						</button>
-					)}
 					<span className={`dashicons dashicons-${ITEM_ICON[item.type] || 'marker'}`}></span>
 					{isEditing ? (
 						<input

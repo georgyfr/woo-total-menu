@@ -265,11 +265,11 @@ class Menu_Controller {
                         ),
                         'header_config' => array(
                                 'description'       => __( 'Configuration JSON du header (optionnel).', 'woo-total-menu' ),
-                                'type'              => array( 'object', 'string' ),
+                                'type'              => array( 'object', 'string', 'null' ),
                         ),
                         'footer_config' => array(
                                 'description'       => __( 'Configuration JSON du footer (optionnel).', 'woo-total-menu' ),
-                                'type'              => array( 'object', 'string' ),
+                                'type'              => array( 'object', 'string', 'null' ),
                         ),
                         'version' => array(
                                 'description'       => __( 'Version du schéma de données.', 'woo-total-menu' ),

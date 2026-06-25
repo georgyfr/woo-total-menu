@@ -385,18 +385,27 @@ const actions = {
 				apiFetch.use(apiFetch.createNonceMiddleware(restNonce));
 				let savedMenu;
 				if (menu.id) {
+					const payload = {
+						title: menu.title,
+						status: menu.status,
+						menu_type: menu.menu_type,
+						location: menu.location,
+						config: menu.config,
+					};
+					// Only include header_config / footer_config when they
+					// actually hold a value. The REST controller's endpoint
+					// args declare them as `object|string` and reject `null`,
+					// so sending null breaks the whole PUT request (HTTP 400).
+					if (menu.header_config) {
+						payload.header_config = menu.header_config;
+					}
+					if (menu.footer_config) {
+						payload.footer_config = menu.footer_config;
+					}
 					savedMenu = await apiFetch({
 						path: `/wtm/v1/menus/${menu.id}`,
 						method: 'PUT',
-						data: {
-							title: menu.title,
-							status: menu.status,
-							menu_type: menu.menu_type,
-							location: menu.location,
-							config: menu.config,
-							header_config: menu.header_config,
-							footer_config: menu.footer_config,
-						},
+						data: payload,
 					});
 				} else {
 					savedMenu = await apiFetch({
