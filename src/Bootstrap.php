@@ -423,10 +423,6 @@ class Bootstrap {
                                 'enabled'      => false,
                                 'track_logged' => false,
                         ),
-                        'permissions' => array(
-                                'admin_default' => 'administrator',
-                                'editor_default' => 'editor',
-                        ),
                         // v1.4.0 — Header/Footer builder settings (spec §3.6, §3.7).
                         'header_footer' => array(
                                 'enabled'           => false,

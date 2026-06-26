@@ -291,7 +291,7 @@ class Menu_Controller {
          * @param \WP_Post $post Post object.
          * @return array
          */
-        public function format_item( $post ) {
+        public static function format_item( $post ) {
                 $config_raw        = get_post_meta( $post->ID, '_wtm_config', true );
                 $header_config_raw = get_post_meta( $post->ID, '_wtm_header_config', true );
                 $footer_config_raw = get_post_meta( $post->ID, '_wtm_footer_config', true );
@@ -374,7 +374,7 @@ class Menu_Controller {
                 // Format response.
                 $items = array();
                 foreach ( $menus as $menu ) {
-                        $items[] = $this->format_item( $menu );
+                        $items[] = self::format_item( $menu );
                 }
 
                 // Build response with pagination headers.
@@ -485,7 +485,7 @@ class Menu_Controller {
                 $this->invalidate_menu_cache( $post_id );
 
                 $post     = get_post( $post_id );
-                $response = new WP_REST_Response( $this->format_item( $post ), 201 );
+                $response = new WP_REST_Response( self::format_item( $post ), 201 );
                 $response->header( 'Location', rest_url( self::REST_NAMESPACE . '/' . self::REST_BASE . '/' . $post_id ) );
                 return $response;
         }
@@ -508,7 +508,7 @@ class Menu_Controller {
                         );
                 }
 
-                return new WP_REST_Response( $this->format_item( $post ), 200 );
+                return new WP_REST_Response( self::format_item( $post ), 200 );
         }
 
         /**
@@ -661,7 +661,7 @@ class Menu_Controller {
                 $this->invalidate_menu_cache( $post_id );
 
                 $post = get_post( $post_id );
-                return new WP_REST_Response( $this->format_item( $post ), 200 );
+                return new WP_REST_Response( self::format_item( $post ), 200 );
         }
 
         /**
@@ -682,7 +682,7 @@ class Menu_Controller {
                         );
                 }
 
-                $previous = $this->format_item( $post );
+                $previous = self::format_item( $post );
 
                 // Invalidate cache before deletion.
                 $this->invalidate_menu_cache( $post_id );
@@ -756,7 +756,7 @@ class Menu_Controller {
                 $this->invalidate_menu_cache( $new_id );
 
                 $new_post = get_post( $new_id );
-                $response = new WP_REST_Response( $this->format_item( $new_post ), 201 );
+                $response = new WP_REST_Response( self::format_item( $new_post ), 201 );
                 $response->header( 'Location', rest_url( self::REST_NAMESPACE . '/' . self::REST_BASE . '/' . $new_id ) );
                 return $response;
         }

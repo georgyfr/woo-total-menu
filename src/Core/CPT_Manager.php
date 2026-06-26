@@ -65,7 +65,7 @@ class CPT_Manager {
          */
         public function __construct() {
                 add_action( 'init', array( $this, 'register_post_type' ), 5 );
-                add_action( 'init', array( $this, 'register_locations' ), 10 );
+                add_action( 'init', array( $this, 'register_locations' ), 999 );
                 add_filter( 'wp_insert_post_data', array( $this, 'default_menu_type_on_insert' ), 10, 2 );
                 add_filter( 'wp_revisions_to_keep', array( $this, 'filter_revisions_to_keep' ), 10, 2 );
         }

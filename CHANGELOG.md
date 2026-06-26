@@ -5,6 +5,31 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.6] - 2026-06-26
+
+### Fixed
+
+- **Permissions : les caps CPT primitives n'étaient pas synchronisées** : quand on accordait
+  `wtm_manage_menus` à un rôle non-admin via les Réglages, les 13 caps CPT primitives
+  (`edit_wtm_menu`, `delete_wtm_menus`, etc.) n'étaient PAS accordées, rendant l'accès
+  REST inutilisable. Désormais elles sont automatiquement ajoutées/supprimées en
+  fonction de la cap `wtm_manage_menus`.
+- **Revisions_Controller instanciait Menu_Controller (effet de bord)** : `restore_revision()`
+  créait un `new Menu_Controller()` pour appeler `format_item()`, ce qui déclenchait le
+  constructeur et ses `add_action()`. `format_item()` est maintenant `static` et appelée
+  sans instanciation.
+- **CPT_Manager::register_locations() avec priorité non-déterministe** : la priorité
+  `init` 10 pouvait entrer en conflit avec l'enregistrement des locations du thème.
+  Changé à la priorité 999 pour garantir que les locations WTM sont fusionnées
+  après tous les thèmes.
+- **Config `permissions` morte dans default_settings()** : les clés `admin_default` et
+  `editor_default` n'étaient lues nulle part. Supprimées.
+- **Dynamic_CSS : heuristic filesize fragile** : remplacé par un simple `file_exists()`
+  puisque le nom de fichier contient déjà le hash MD5 du contenu.
+- **Analytics_Controller : instantiation inutile dans le permission callback** : la méthode
+  `track_permission()` créait un objet `Analytics` complet (avec requête DB) pour
+  vérifier si le tracking est activé. Remplacé par une lecture directe de l'option.
+
 ## [1.7.5] - 2026-06-26
 
 ### Fixed

@@ -363,9 +363,8 @@ class Revisions_Controller {
 
                 // 4. Return the restored menu (using Menu_Controller::format_item
                 // for consistency with the GET /menus/{id} response).
-                $menu_controller = new Menu_Controller();
-                $restored_post   = get_post( $post_id );
-                $menu_data       = $menu_controller->format_item( $restored_post );
+                $restored_post = get_post( $post_id );
+                $menu_data     = Menu_Controller::format_item( $restored_post );
 
                 return new WP_REST_Response(
                         array(

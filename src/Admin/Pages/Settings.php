@@ -515,6 +515,22 @@ class Settings {
                                         $role->remove_cap( $cap );
                                 }
                         }
+
+                        // Sync CPT primitive caps with the wtm_manage_menus high-level cap.
+                        // If the role has wtm_manage_menus, grant all CPT primitive caps;
+                        // otherwise remove them so the REST endpoints work correctly.
+                        $has_menu_cap = isset( $perms_input[ $role_slug ]['wtm_manage_menus'] );
+                        if ( 'administrator' === $role_slug ) {
+                                $has_menu_cap = true;
+                        }
+                        $cpt_caps = \WooTotalMenu\Core\Permissions::CPT_PRIMITIVE_CAPS;
+                        foreach ( $cpt_caps as $cpt_cap ) {
+                                if ( $has_menu_cap ) {
+                                        $role->add_cap( $cpt_cap );
+                                } else {
+                                        $role->remove_cap( $cpt_cap );
+                                }
+                        }
                 }
 
                 // Update version metadata.
