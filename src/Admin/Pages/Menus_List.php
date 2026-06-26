@@ -225,7 +225,7 @@ class Menus_List {
                         echo '<div class="wtm-notice is-success"><p>' . esc_html__( 'Menu supprimé avec succès.', 'woo-total-menu' ) . '</p></div>';
                 }
                 if ( isset( $_GET['wtm_duplicated'] ) ) {
-                        echo '<div class="wtm-notice is-success"><p>' . esc_html__( 'Menu dupliqué avec succès.', 'woo-total-menu' );'</p></div>';
+                        echo '<div class="wtm-notice is-success"><p>' . esc_html__( 'Menu dupliqué avec succès.', 'woo-total-menu' ) . '</p></div>';
                 }
                 if ( isset( $_GET['wtm_toggled'] ) ) {
                         $new_status = isset( $_GET['wtm_new_status'] ) ? sanitize_key( wp_unslash( $_GET['wtm_new_status'] ) ) : '';
