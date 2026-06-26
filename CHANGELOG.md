@@ -5,6 +5,20 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-06-26
+
+### Fixed
+
+- **Suppression de tous les `apiFetch.createNonceMiddleware()` dans le Builder JS** : l'appel
+  répété à `apiFetch.use()` empilait les middlewares de nonce à chaque requête REST, causant
+  des comportements imprévisibles et des erreurs d'authentification. Le nonce est maintenant
+  passé directement via le header `X-WP-Nonce` dans chaque appel `apiFetch()` individuel.
+  Fichiers corrigés :
+  - `builder/stores/templates.js` (2 occurrences)
+  - `builder/stores/menu.js` (6 occurrences)
+  - `builder/components/ModuleProperties.js` (1 occurrence)
+  - `builder/components/ConditionsPanel.js` (4 occurrences)
+
 ## [1.7.2] - 2026-06-26
 
 ### Fixed

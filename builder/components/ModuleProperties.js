@@ -45,11 +45,11 @@ async function fetchAvailableMenus(restNonce) {
                 return _availableMenusCache;
         }
 
-        apiFetch.use(apiFetch.createNonceMiddleware(restNonce));
+        const nonceHeaders = { headers: { 'X-WP-Nonce': restNonce } };
 
         const [wtmResp, wpResp] = await Promise.all([
-                apiFetch({ path: '/wtm/v1/menus?per_page=100&status=any' }).catch(() => []),
-                apiFetch({ path: '/wtm/v1/wp-menus' }).catch(() => ({ menus: [] })),
+                apiFetch({ path: '/wtm/v1/menus?per_page=100&status=any', ...nonceHeaders }).catch(() => []),
+                apiFetch({ path: '/wtm/v1/wp-menus', ...nonceHeaders }).catch(() => ({ menus: [] })),
         ]);
 
         const wtm = (Array.isArray(wtmResp) ? wtmResp : []).map((m) => ({

@@ -397,8 +397,10 @@ const actions = {
                                         dispatch.setDirty(false);
                                 } else {
                                         const restNonce = registry.select('wtm/ui').getRestNonce();
-                                        apiFetch.use(apiFetch.createNonceMiddleware(restNonce));
-                                        const menu = await apiFetch({ path: `/wtm/v1/menus/${menuId}` });
+                                        const menu = await apiFetch({
+                                                path: `/wtm/v1/menus/${menuId}`,
+                                                headers: { 'X-WP-Nonce': restNonce },
+                                        });
                                         dispatch.setMenu(menu);
                                         dispatch.setDirty(false);
                                 }
@@ -418,7 +420,6 @@ const actions = {
                         dispatch.setError(null);
                         try {
                                 const restNonce = registry.select('wtm/ui').getRestNonce();
-                                apiFetch.use(apiFetch.createNonceMiddleware(restNonce));
                                 let savedMenu;
                                 if (menu.id) {
                                         const payload = {
@@ -451,6 +452,7 @@ const actions = {
                                                 path: `/wtm/v1/menus/${menu.id}`,
                                                 method: 'PUT',
                                                 data: payload,
+                                                headers: { 'X-WP-Nonce': restNonce },
                                         });
                                 } else {
                                         savedMenu = await apiFetch({
@@ -462,6 +464,7 @@ const actions = {
                                                         location: menu.location || 'primary',
                                                         config: menu.config || { version: 1, items: [] },
                                                 },
+                                                headers: { 'X-WP-Nonce': restNonce },
                                         });
                                 }
                                 dispatch.setMenu(savedMenu);
@@ -493,10 +496,10 @@ const actions = {
                         dispatch.setIsLoadingRevisions(true);
                         try {
                                 const restNonce = registry.select('wtm/ui').getRestNonce();
-                                apiFetch.use(apiFetch.createNonceMiddleware(restNonce));
                                 const revisions = await apiFetch({
                                         path: `/wtm/v1/menus/${menuId}/revisions?per_page=50`,
                                         method: 'GET',
+                                        headers: { 'X-WP-Nonce': restNonce },
                                 });
                                 dispatch.setRevisions(revisions);
                         } catch (err) {
@@ -522,10 +525,10 @@ const actions = {
                         dispatch.setIsRestoring(true);
                         try {
                                 const restNonce = registry.select('wtm/ui').getRestNonce();
-                                apiFetch.use(apiFetch.createNonceMiddleware(restNonce));
                                 const result = await apiFetch({
                                         path: `/wtm/v1/menus/${menuId}/revisions/${revisionId}/restore`,
                                         method: 'POST',
+                                        headers: { 'X-WP-Nonce': restNonce },
                                 });
                                 if (result && result.menu) {
                                         dispatch.setMenu(result.menu);
