@@ -524,6 +524,14 @@ class Settings {
                 // Save.
                 update_option( self::OPTION_KEY, $settings );
 
+                /**
+                 * Fires after global settings are saved.
+                 *
+                 * @since 1.0.0
+                 * @param array $settings The full settings array.
+                 */
+                do_action( 'wtm_settings_saved', $settings );
+
                 // Redirect to avoid resubmission.
                 $active_tab = isset( $_POST['wtm_active_tab'] ) ? sanitize_key( wp_unslash( $_POST['wtm_active_tab'] ) ) : 'general';
                 wp_safe_redirect(

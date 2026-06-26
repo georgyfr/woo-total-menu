@@ -251,6 +251,9 @@ class Bootstrap {
                 // Also purge on revision restore (spec §7.6).
                 add_action( 'wp_restore_post_revision', array( $this, 'purge_dynamic_css' ) );
 
+                // v1.7.5 — Daily analytics cleanup cron.
+                add_action( 'wtm_analytics_cleanup', array( $this, 'run_analytics_cleanup' ) );
+
                 // v1.6.0 — Multisite support : initialise les nouveaux blogs créés
                 // après activation réseau. Le hook n'est déclenché qu'en multisite.
                 add_action( 'wpmu_new_blog', array( '\\WooTotalMenu\\Core\\Multisite_Manager', 'on_new_blog' ) );
@@ -267,6 +270,17 @@ class Bootstrap {
                 if ( isset( $this->services['dynamic_css'] ) ) {
                         $this->services['dynamic_css']->purge();
                 }
+        }
+
+        /**
+         * Run the daily analytics data cleanup.
+         *
+         * @since 1.7.5
+         * @return void
+         */
+        public function run_analytics_cleanup() {
+                $analytics = new \WooTotalMenu\Core\Analytics();
+                $analytics->cleanup();
         }
 
         /**
@@ -325,6 +339,11 @@ class Bootstrap {
                 $permissions = new \WooTotalMenu\Core\Permissions();
                 $permissions->register_caps();
 
+                // Schedule daily analytics cleanup cron.
+                if ( ! wp_next_scheduled( 'wtm_analytics_cleanup' ) ) {
+                        wp_schedule_event( time(), 'daily', 'wtm_analytics_cleanup' );
+                }
+
                 // Flush rewrite rules after activation.
                 flush_rewrite_rules( false );
 
@@ -349,10 +368,12 @@ class Bootstrap {
                         \WooTotalMenu\Core\Multisite_Manager::for_each_blog(
                                 static function () {
                                         flush_rewrite_rules( false );
+                                        wp_clear_scheduled_hook( 'wtm_analytics_cleanup' );
                                 }
                         );
                         return;
                 }
+                wp_clear_scheduled_hook( 'wtm_analytics_cleanup' );
                 flush_rewrite_rules( false );
 
                 /**

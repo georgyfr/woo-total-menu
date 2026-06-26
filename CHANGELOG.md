@@ -5,6 +5,22 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.5] - 2026-06-26
+
+### Fixed
+
+- **`wtm_settings_saved` hook jamais déclenché (CRITIQUE)** : ajout de `do_action('wtm_settings_saved')`
+  dans `Settings::save_settings()`. Sans ce hook, modifier les couleurs/typographie/breakpoints
+  dans les réglages ne régénérait jamais le fichier CSS dynamique.
+- **`Conditions_Controller::check_permission()` retournait `false` au lieu de `WP_Error`** :
+  WordPress REST API exige un `WP_Error` pour les erreurs, pas un booléen. Retourne
+  maintenant une erreur 404 explicite.
+- **Cron de nettoyage Analytics jamais planifié** : ajout de `wp_schedule_event('daily')`
+  à l'activation du plugin, avec `wp_clear_scheduled_hook()` à la désactivation.
+  La méthode `Analytics::cleanup()` est maintenant exécutée automatiquement chaque jour.
+- **Off-by-one dans `Analytics::cleanup()`** : la boucle commençait à `$days + 1` au lieu
+  de `$days`, sautant le jour exact de coupure lors du nettoyage.
+
 ## [1.7.4] - 2026-06-26
 
 ### Added
