@@ -5,6 +5,19 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2026-06-26
+
+### Added
+
+- **Dossier `build/` avec les assets compilés** : le Builder React (Builder visuel glisser-déposer)
+  est maintenant compilé et inclus dans le dépôt. Sans ces fichiers, l'interface d'administration
+  du plugin était vide/inaccessible après installation.
+
+### Changed
+
+- **Nettoyage de `package.json`** : suppression de `@dnd-kit/modifiers` qui n'était importé
+  nulle part dans le code source.
+
 ## [1.7.3] - 2026-06-26
 
 ### Fixed
