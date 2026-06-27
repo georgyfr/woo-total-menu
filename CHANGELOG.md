@@ -5,6 +5,30 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.8] - 2026-06-28
+
+### Fixed
+
+- **Builder inaccessible — assets React non compilés (CRITIQUE)** : le dossier `build/`
+  était dans `.gitignore`, donc les fichiers compilés (`index.js`, `style-index.css`)
+  n'étaient jamais poussés sur GitHub. Après un clone ou une mise à jour,
+  la page du Builder affichait l'erreur « Les assets React ne sont pas compilés ».
+  Le `build/` est maintenant commité dans le dépôt.
+
+- **Dépendances npm manquantes/incompatibles** :
+  - Ajout de `@wordpress/components` (manquant, utilisé par TemplateGallery & TemplateCard)
+  - Correction de `@dnd-kit/sortable` de `^10.0.0` à `^8.0.0` (compatible avec
+    `@dnd-kit/core@^6.3.1`)
+
+- **SortableTreeItem — isOver/active/over depuis useDndContext** : ces valeurs
+  n'existent pas dans le retour de `useSortable()` en v8. Elles sont maintenant
+  obtenues via `useDndContext()` from `@dnd-kit/core`.
+
+### Changed
+
+- `build/` retiré de `.gitignore` pour distribution
+- Assets compilés inclus : index.js (161 Ko), style-index.css (40 Ko), blocks.js
+
 ## [1.7.7] - 2026-06-28
 
 ### Added

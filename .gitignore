@@ -2,8 +2,7 @@
 node_modules/
 vendor/
 
-# Build artifacts (regenerated from src/)
-build/
+# Source maps only (build/ is committed for distribution)
 *.map
 
 # Logs & debug

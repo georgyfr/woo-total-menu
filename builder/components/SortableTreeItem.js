@@ -23,6 +23,7 @@ import { useState, useEffect, useRef } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { useSelect, useDispatch } from '@wordpress/data';
 import { useSortable } from '@dnd-kit/sortable';
+import { useDndContext } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
 import { WTM_STORE_NAME } from '../stores/menu';
@@ -103,10 +104,14 @@ export default function SortableTreeItem({
                 transform,
                 transition,
                 isDragging,
-                isOver,
-                active,
-                over,
         } = sortable;
+
+        // active, over, and isOver-aware logic come from the parent DndContext
+        // (useSortable does not expose these in @dnd-kit/sortable v8).
+        const { active: dndActive, over: dndOver } = useDndContext();
+        const isOver = dndOver?.id === item.id;
+        const active = dndActive;
+        const over = dndOver;
 
         // Track the live cursor position during a drag (spec §6.3.2 — drop zones
         // must update in real time as the pointer moves within a single item).
