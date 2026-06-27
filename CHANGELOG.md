@@ -5,6 +5,22 @@ All notable changes to Woo Total Menu will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.7] - 2026-06-28
+
+### Added
+
+- **Onglet Header / Footer dans les Réglages (CRITIQUE)** : ajout d'un onglet complet
+  dans la page de réglages pour configurer l'injection automatique du header/footer.
+  L'onglet permet de :
+  - Activer/désactiver l'injection header/footer
+  - Sélectionner un menu WTM pour le header (dropdown des menus publiés)
+  - Sélectionner un menu WTM pour le footer (dropdown des menus publiés)
+  - Masquer le header natif du thème
+  - Masquer le footer natif du thème
+  Les données étaient déjà stockées dans `wtm_global_settings.header_footer` mais
+  aucune UI n'existait pour les configurer. La sauvegarde est maintenant traitée
+  correctement dans `save_settings()`.
+
 ## [1.7.6] - 2026-06-26
 
 ### Fixed

@@ -31,8 +31,9 @@ class Settings {
                 'styles'      => array( 'label' => 'Styles',      'icon' => 'art' ),
                 'typography'  => array( 'label' => 'Typographie', 'icon' => 'editor-textcolor' ),
                 'responsive'  => array( 'label' => 'Responsive',  'icon' => 'smartphone' ),
-                'performance' => array( 'label' => 'Performance', 'icon' => 'performance' ),
-                'analytics'   => array( 'label' => 'Analytics',   'icon' => 'chart-bar' ),
+                'performance'    => array( 'label' => 'Performance',    'icon' => 'performance' ),
+                'header_footer' => array( 'label' => 'Header / Footer', 'icon' => 'layout' ),
+                'analytics'     => array( 'label' => 'Analytics',     'icon' => 'chart-bar' ),
                 'permissions' => array( 'label' => 'Permissions', 'icon' => 'shield-alt' ),
         );
 
@@ -100,6 +101,9 @@ class Settings {
                                                 break;
                                         case 'performance':
                                                 self::render_tab_performance( $settings );
+                                                break;
+                                        case 'header_footer':
+                                                self::render_tab_header_footer( $settings );
                                                 break;
                                         case 'analytics':
                                                 self::render_tab_analytics( $settings );
@@ -369,6 +373,95 @@ class Settings {
         }
 
         /**
+         * Tab: Header / Footer.
+         *
+         * Lets the admin enable automatic header/footer replacement via the
+         * Header/Footer Builder. When enabled, the selected wtm_menu replaces
+         * the theme's default header and/or footer on the front-end.
+         *
+         * @param array $s Settings.
+         * @return void
+         */
+        private static function render_tab_header_footer( $s ) {
+                $hf      = $s['header_footer'] ?? array();
+                $enabled = ! empty( $hf['enabled'] );
+
+                // Fetch all published wtm_menu posts for the dropdowns.
+                $menus = get_posts(
+                        array(
+                                'post_type'      => 'wtm_menu',
+                                'posts_per_page' => 200,
+                                'post_status'    => 'publish',
+                                'orderby'        => 'title',
+                                'order'          => 'ASC',
+                        )
+                );
+
+                ?>
+                <div class="wtm-form-section">
+                        <h3><span class="dashicons dashicons-layout"></span> <?php esc_html_e( 'Injection Header / Footer', 'woo-total-menu' ); ?></h3>
+                        <p style="color:#6b7280; margin-top:0;">
+                                <?php esc_html_e( 'Remplacez le header et/ou le footer de votre th\xE8me par ceux cr\xE9\xE9s avec le Builder Header/Footer de Woo Total Menu.', 'woo-total-menu' ); ?>
+                        </p>
+
+                        <div class="wtm-form-row">
+                                <label for="hf_enabled">
+                                        <input type="checkbox" name="header_footer[enabled]" id="hf_enabled" value="1" <?php checked( $enabled ); ?>>
+                                        <?php esc_html_e( "Activer l'injection automatique du header/footer", 'woo-total-menu' ); ?>
+                                </label>
+                                <p class="description"><?php esc_html_e( 'Remplace le header et le footer du th\xE8me par les menus WTM s\xE9lectionn\xE9s ci-dessous.', 'woo-total-menu' ); ?></p>
+                        </div>
+
+                        <div class="wtm-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top:16px;">
+                                <div class="wtm-form-row">
+                                        <label for="hf_header_menu_id"><strong><?php esc_html_e( 'Menu pour le Header', 'woo-total-menu' ); ?></strong></label>
+                                        <select name="header_footer[header_menu_id]" id="hf_header_menu_id">
+                                                <option value="0"><?php esc_html_e( '\xE2\x80\x94 Aucun (conserver le th\xE8me) \xE2\x80\x94', 'woo-total-menu' ); ?></option>
+                                                <?php foreach ( $menus as $menu ) : ?>
+                                                        <option value="<?php echo esc_attr( $menu->ID ); ?>" <?php selected( absint( $hf['header_menu_id'] ?? 0 ), $menu->ID ); ?>>
+                                                                <?php echo esc_html( $menu->post_title ); ?>
+                                                        </option>
+                                                <?php endforeach; ?>
+                                        </select>
+                                        <p class="description"><?php esc_html_e( 'S\xE9lectionnez un menu de type header cr\xE9\xE9 dans le Builder.', 'woo-total-menu' ); ?></p>
+                                </div>
+
+                                <div class="wtm-form-row">
+                                        <label for="hf_footer_menu_id"><strong><?php esc_html_e( 'Menu pour le Footer', 'woo-total-menu' ); ?></strong></label>
+                                        <select name="header_footer[footer_menu_id]" id="hf_footer_menu_id">
+                                                <option value="0"><?php esc_html_e( '\xE2\x80\x94 Aucun (conserver le th\xE8me) \xE2\x80\x94', 'woo-total-menu' ); ?></option>
+                                                <?php foreach ( $menus as $menu ) : ?>
+                                                        <option value="<?php echo esc_attr( $menu->ID ); ?>" <?php selected( absint( $hf['footer_menu_id'] ?? 0 ), $menu->ID ); ?>>
+                                                                <?php echo esc_html( $menu->post_title ); ?>
+                                                        </option>
+                                                <?php endforeach; ?>
+                                        </select>
+                                        <p class="description"><?php esc_html_e( 'S\xE9lectionnez un menu de type footer cr\xE9\xE9 dans le Builder.', 'woo-total-menu' ); ?></p>
+                                </div>
+                        </div>
+
+                        <div class="wtm-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top:16px;">
+                                <div class="wtm-form-row">
+                                        <label for="hf_hide_theme_header">
+                                                <input type="checkbox" name="header_footer[hide_theme_header]" id="hf_hide_theme_header" value="1" <?php checked( ! empty( $hf['hide_theme_header'] ) ); ?>>
+                                                <?php esc_html_e( 'Masquer le header du th\xE8me', 'woo-total-menu' ); ?>
+                                        </label>
+                                        <p class="description"><?php esc_html_e( 'Supprime le header natif du th\xE8me quand un header WTM est actif.', 'woo-total-menu' ); ?></p>
+                                </div>
+
+                                <div class="wtm-form-row">
+                                        <label for="hf_hide_theme_footer">
+                                                <input type="checkbox" name="header_footer[hide_theme_footer]" id="hf_hide_theme_footer" value="1" <?php checked( ! empty( $hf['hide_theme_footer'] ) ); ?>>
+                                                <?php esc_html_e( 'Masquer le footer du th\xE8me', 'woo-total-menu' ); ?>
+                                        </label>
+                                        <p class="description"><?php esc_html_e( 'Supprime le footer natif du th\xE8me quand un footer WTM est actif.', 'woo-total-menu' ); ?></p>
+                                </div>
+                        </div>
+                </div>
+                <?php
+        }
+
+        /**
          * Tab: Permissions.
          *
          * @param array $s Settings.
@@ -488,6 +581,14 @@ class Settings {
                 $analytics_input = isset( $_POST['analytics'] ) ? (array) wp_unslash( $_POST['analytics'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $settings['analytics']['enabled']      = isset( $analytics_input['enabled'] );
                 $settings['analytics']['track_logged'] = isset( $analytics_input['track_logged'] );
+
+                // Header/Footer injection settings.
+                $hf_input = isset( $_POST['header_footer'] ) ? (array) wp_unslash( $_POST['header_footer'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                $settings['header_footer']['enabled']           = isset( $hf_input['enabled'] );
+                $settings['header_footer']['header_menu_id']    = absint( $hf_input['header_menu_id'] ?? 0 );
+                $settings['header_footer']['footer_menu_id']    = absint( $hf_input['footer_menu_id'] ?? 0 );
+                $settings['header_footer']['hide_theme_header'] = isset( $hf_input['hide_theme_header'] );
+                $settings['header_footer']['hide_theme_footer'] = isset( $hf_input['hide_theme_footer'] );
 
                 // Permissions — apply caps to roles.
                 $perms_input = isset( $_POST['permissions'] ) ? (array) wp_unslash( $_POST['permissions'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

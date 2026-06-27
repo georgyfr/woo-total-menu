@@ -3,7 +3,7 @@
  * Plugin Name:       Woo Total Menu
  * Plugin URI:        https://github.com/woo-total-menu/woo-total-menu
  * Description:       Créez des méga menus, headers et footers WooCommerce avancés via un builder visuel glisser-déposer. Rendu responsive, performant, sans dépendance à un page builder.
- * Version:           1.7.6
+ * Version:           1.7.7
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Woo Total Menu Team
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Plugin constants.
  */
-define( 'WTM_VERSION', '1.7.6' );
+define( 'WTM_VERSION', '1.7.7' );
 define( 'WTM_PLUGIN_FILE', __FILE__ );
 define( 'WTM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WTM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
